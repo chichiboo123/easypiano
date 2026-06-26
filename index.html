@@ -54,12 +54,13 @@
         body, html {
             margin: 0;
             padding: 0;
-            min-height: 100%;
+            min-height: 100vh;
             background-color: var(--bg-color);
             font-family: 'Pretendard GOV', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow-x: hidden;
             /* 모바일/태블릿에서 화면 드래그 방지 (목록 스크롤을 위해 body는 auto) */
             touch-action: pan-y;
         }
@@ -68,23 +69,31 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             width: 100%;
-            padding-top: 30px;
+            padding-top: 14px;
             user-select: none;
             -webkit-user-select: none;
         }
 
+        /* 앱(연주) 화면 자체를 가운데 정렬 — 옥타브/옵션 박스 가운데 정렬 */
+        #appScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: var(--text-color);
         }
 
         .header h1 {
             font-family: 'Black Han Sans', sans-serif; /* 타이틀 폰트 변경 */
             font-weight: 400;
-            font-size: 2.8rem;
+            font-size: clamp(1.6rem, 5vw, 2.6rem);
             margin: 0;
             display: flex;
             align-items: center;
@@ -93,15 +102,15 @@
         }
 
         .header h1 .material-icons-round {
-            font-size: 2.8rem;
+            font-size: clamp(1.6rem, 5vw, 2.6rem);
             color: var(--pastel-pink);
         }
 
         .header .subtitle {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--muted);
             font-weight: bold;
-            margin-top: 4px;
+            margin-top: 2px;
             letter-spacing: 1px;
         }
 
@@ -239,13 +248,15 @@
         .octave-selector {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin: 0 auto 14px;
             background: var(--inset-bg);
             padding: 5px;
             border-radius: 20px;
         }
 
         .octave-btn {
+            flex: 1 1 0;
+            text-align: center;
             padding: 8px 20px;
             border-radius: 15px;
             border: none;
@@ -269,7 +280,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             justify-content: center;
         }
 
@@ -317,7 +328,7 @@
         .chord-panel {
             width: 95vw;
             max-width: 800px;
-            margin-bottom: 20px;
+            margin: 0 auto 14px;
         }
         .sustain-row {
             display: flex;
@@ -344,7 +355,7 @@
             box-shadow: 0 0 0 4px rgba(199,206,234,0.4);
         }
 
-        .chord-group { margin-bottom: 14px; }
+        .chord-group { margin-bottom: 9px; }
         .chord-group-label {
             font-size: 0.85rem;
             font-weight: bold;
@@ -389,37 +400,63 @@
         /* ================= 발성 모드 패널 ================= */
         .vocal-panel {
             width: 95vw;
-            max-width: 600px;
+            max-width: 420px;
+            margin: 0 auto 14px;
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 20px 25px;
-            margin-bottom: 20px;
+            padding: 18px 20px;
             box-sizing: border-box;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
+        /* 라벨 | 컨트롤 2단 그리드 — 모든 옵션 줄을 동일 폭으로 정렬 */
         .vocal-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 56px 280px;
             align-items: center;
+            gap: 14px;
             justify-content: center;
-            gap: 15px;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
-        .vocal-label { font-weight: bold; color: var(--text-color); }
+        .vocal-label {
+            font-weight: bold;
+            color: var(--text-color);
+            text-align: right;
+            white-space: nowrap;
+        }
         .pattern-selector {
-            display: flex; gap: 6px;
+            display: flex; gap: 4px;
+            width: 100%;
+            box-sizing: border-box;
             background: var(--inset-bg); padding: 5px; border-radius: 18px;
-            flex-wrap: wrap; justify-content: center;
         }
         .pattern-btn {
-            padding: 8px 16px; border: none; border-radius: 14px;
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 8px 4px; border: none; border-radius: 14px;
             background: transparent; color: #64748B;
             font-family: inherit; font-weight: bold; cursor: pointer;
             transition: all 0.2s; white-space: nowrap;
+            text-align: center;
         }
         .pattern-btn.active { background: var(--card-bg); color: var(--text-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        .speed-slider { width: 180px; accent-color: var(--pastel-green); cursor: pointer; }
+        /* 속도 컨트롤(걷기 아이콘 + 슬라이더 + 뛰기 아이콘) */
+        .speed-control {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%;
+        }
+        .speed-slider { flex: 1; width: auto; accent-color: var(--pastel-green); cursor: pointer; }
+
+        /* 연주 시작 버튼 줄은 가운데 정렬 */
+        .vocal-play-row {
+            display: flex;
+            justify-content: center;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 380px) {
+            .vocal-row { grid-template-columns: 48px 1fr; gap: 8px; }
+        }
 
         .vocal-play-btn {
             display: flex; align-items: center; gap: 6px;
@@ -435,7 +472,7 @@
 
         .vocal-guide {
             display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
-            margin-top: 16px;
+            margin-top: 12px;
         }
         .guide-note {
             min-width: 34px; padding: 6px 4px; text-align: center;
@@ -448,8 +485,8 @@
         .piano-wrapper {
             position: relative;
             background-color: var(--inset-bg);
-            padding: 15px;
-            padding-bottom: 20px;
+            padding: 12px;
+            padding-bottom: 16px;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1), inset 0 5px 10px rgba(255,255,255,0.5);
             width: 95vw;
@@ -460,8 +497,7 @@
         .piano-container {
             position: relative;
             display: flex;
-            height: 40vh;
-            max-height: 300px;
+            height: clamp(160px, 32vh, 280px);
             width: 100%;
             border-radius: 10px;
             touch-action: none;
@@ -546,8 +582,8 @@
             max-width: 800px;
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 20px;
-            margin-top: 30px;
+            padding: 16px 20px;
+            margin-top: 16px;
             box-sizing: border-box;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
@@ -566,7 +602,7 @@
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 250px;
+            max-height: 160px;
             overflow-y: auto;
         }
 
@@ -664,8 +700,8 @@
         /* ================= 코드 모드: 현재 코드 표시 ================= */
         .chord-display {
             text-align: center;
-            margin-bottom: 14px;
-            min-height: 48px;
+            margin-bottom: 10px;
+            min-height: 42px;
         }
         .chord-display .cd-name {
             font-family: 'Black Han Sans', sans-serif;
@@ -736,10 +772,27 @@
         .modal-btn.danger { background: #FF6B6B; color: white; }
         .modal-btn.ghost { background: var(--inset-bg); color: var(--text-color); }
 
+        /* 낮은(짧은) 화면에서 스크롤 없이 한 화면에 담기 위한 압축 */
+        @media (max-height: 860px) {
+            .main-content { padding-top: 8px; }
+            .header { margin-bottom: 6px; }
+            .header h1 { font-size: clamp(1.5rem, 4.5vw, 2.1rem); }
+            .header h1 .material-icons-round { font-size: clamp(1.5rem, 4.5vw, 2.1rem); }
+            .piano-container { height: clamp(150px, 26vh, 230px); }
+            .octave-selector { margin-bottom: 10px; }
+            .controls-wrapper { margin-bottom: 10px; }
+            .vocal-panel { margin-bottom: 10px; padding: 14px 18px; }
+            .vocal-row { margin-bottom: 8px; }
+            .vocal-guide { margin-top: 8px; }
+            .records-container { margin-top: 10px; padding: 12px 18px; }
+            .records-list { max-height: 110px; }
+            .footer { padding: 8px 0 8px 0; }
+        }
+
         /* 푸터 */
         .footer {
             margin-top: auto;
-            padding: 30px 0 20px 0;
+            padding: 14px 0 12px 0;
             text-align: center;
             color: #94a3b8;
             font-size: 0.9rem;
@@ -859,11 +912,13 @@
                 </div>
                 <div class="vocal-row">
                     <span class="vocal-label">속도</span>
-                    <span class="material-icons-round" style="color:#94A3B8;">directions_walk</span>
-                    <input type="range" min="1" max="10" value="6" class="speed-slider" id="speedSlider">
-                    <span class="material-icons-round" style="color:#94A3B8;">directions_run</span>
+                    <div class="speed-control">
+                        <span class="material-icons-round" style="color:#94A3B8;">directions_walk</span>
+                        <input type="range" min="1" max="10" value="6" class="speed-slider" id="speedSlider">
+                        <span class="material-icons-round" style="color:#94A3B8;">directions_run</span>
+                    </div>
                 </div>
-                <div class="vocal-row">
+                <div class="vocal-play-row">
                     <button class="vocal-play-btn" id="vocalPlayBtn"><span class="material-icons-round">play_arrow</span> 연주 시작</button>
                 </div>
                 <div class="vocal-guide" id="vocalGuide"><!-- JS로 렌더링 --></div>
