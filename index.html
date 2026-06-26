@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>여기 있어 피아노</title>
+    
+    <!-- 폰트 및 아이콘 -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-gov-dynamic-subset.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Tone.js (오디오 라이브러리) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #F8FAFC;
+            --pastel-blue: #AEC6CF;
+            --pastel-pink: #FFD1DC;
+            --pastel-green: #B5EAD7;
+            --pastel-yellow: #FDFD96;
+            --key-white: #FFFFFF;
+            --key-black: #333333;
+            --text-color: #475569;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            background-color: var(--bg-color);
+            font-family: 'Pretendard GOV', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 모바일/태블릿에서 화면 드래그 방지 (목록 스크롤을 위해 body는 auto) */
+            touch-action: pan-y; 
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding-top: 30px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .header h1 {
+            font-family: 'Black Han Sans', sans-serif; /* 타이틀 폰트 변경 */
+            font-weight: 400;
+            font-size: 2.8rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header h1 .material-icons-round {
+            font-size: 2.8rem;
+            color: var(--pastel-pink);
+        }
+
+        /* 옥타브 선택기 */
+        .octave-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #E2E8F0;
+            padding: 5px;
+            border-radius: 20px;
+        }
+
+        .octave-btn {
+            padding: 8px 20px;
+            border-radius: 15px;
+            border: none;
+            background: transparent;
+            color: #64748B;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .octave-btn.active {
+            background: white;
+            color: var(--text-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* 컨트롤 패널 완벽한 가운데 정렬 */
+        .controls-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            height: 60px; /* 고정 높이로 레이아웃 흔들림 방지 */
+            justify-content: center;
+        }
+
+        .controls-panel {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        .control-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn-record { background-color: #FF6B6B; color: white; }
+        .btn-stop { background-color: #4ECDC4; color: white; display: none; }
+        .btn-reset { background-color: #94A3B8; color: white; display: none; }
+        
+        .record-status {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #FF6B6B;
+            margin-top: 8px;
+            height: 15px; /* 공간 확보 */
+        }
+
+        /* 피아노 컨테이너 */
+        .piano-wrapper {
+            position: relative;
+            background-color: #E2E8F0;
+            padding: 15px;
+            padding-bottom: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1), inset 0 5px 10px rgba(255,255,255,0.5);
+            width: 95vw;
+            max-width: 800px;
+        }
+
+        .piano-container {
+            position: relative;
+            display: flex;
+            height: 40vh;
+            max-height: 300px;
+            width: 100%;
+            border-radius: 10px;
+            touch-action: none; 
+        }
+
+        /* 건반 공통 스타일 */
+        .key {
+            position: relative;
+            flex: 1;
+            margin: 0 3px;
+            border-radius: 0 0 15px 15px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 15px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.1s, transform 0.1s, box-shadow 0.1s;
+        }
+
+        /* 흰 건반 */
+        .key.white {
+            background-color: var(--key-white);
+            color: var(--text-color);
+            z-index: 1;
+            box-shadow: 0 6px 0 #CBD5E1;
+        }
+
+        .key.white.active:nth-child(even) { background-color: var(--pastel-pink); }
+        .key.white.active:nth-child(odd) { background-color: var(--pastel-yellow); }
+        .key.white.active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #CBD5E1;
+        }
+
+        /* 검은 건반 */
+        .key.black {
+            background-color: var(--key-black);
+            color: white;
+            position: absolute;
+            height: 60%;
+            top: 0;
+            z-index: 2;
+            margin: 0;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 0 #111111;
+        }
+
+        .key.black.active {
+            background-color: var(--pastel-blue);
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #111111;
+        }
+
+        /* === 1옥타브 모드 위치 계산 === */
+        .piano-container.octave-1 .key.black { width: 8%; }
+        .piano-container.octave-1 .black.cs4 { left: calc(100% / 8 * 1 - 4%); }
+        .piano-container.octave-1 .black.ds4 { left: calc(100% / 8 * 2 - 4%); }
+        .piano-container.octave-1 .black.fs4 { left: calc(100% / 8 * 4 - 4%); }
+        .piano-container.octave-1 .black.gs4 { left: calc(100% / 8 * 5 - 4%); }
+        .piano-container.octave-1 .black.as4 { left: calc(100% / 8 * 6 - 4%); }
+        /* 2옥타브 영역 숨김 */
+        .piano-container.octave-1 [data-oct="2"] { display: none !important; }
+
+        /* === 2옥타브 모드 위치 계산 === */
+        .piano-container.octave-2 .key.black { width: 5%; }
+        .piano-container.octave-2 .black.cs4 { left: calc(100% / 15 * 1 - 2.5%); }
+        .piano-container.octave-2 .black.ds4 { left: calc(100% / 15 * 2 - 2.5%); }
+        .piano-container.octave-2 .black.fs4 { left: calc(100% / 15 * 4 - 2.5%); }
+        .piano-container.octave-2 .black.gs4 { left: calc(100% / 15 * 5 - 2.5%); }
+        .piano-container.octave-2 .black.as4 { left: calc(100% / 15 * 6 - 2.5%); }
+        .piano-container.octave-2 .black.cs5 { left: calc(100% / 15 * 8 - 2.5%); }
+        .piano-container.octave-2 .black.ds5 { left: calc(100% / 15 * 9 - 2.5%); }
+        .piano-container.octave-2 .black.fs5 { left: calc(100% / 15 * 11 - 2.5%); }
+        .piano-container.octave-2 .black.gs5 { left: calc(100% / 15 * 12 - 2.5%); }
+        .piano-container.octave-2 .black.as5 { left: calc(100% / 15 * 13 - 2.5%); }
+
+        /* 로딩 오버레이 */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 20px;
+        }
+
+        .status-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-family: inherit;
+            background-color: var(--pastel-green);
+            border: none;
+            border-radius: 30px;
+            color: #1E293B;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #88CBAF;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--pastel-blue);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 녹음 목록 영역 */
+        .records-container {
+            width: 95vw;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .records-container h3 {
+            margin-top: 0;
+            color: var(--text-color);
+            border-bottom: 2px solid #F1F5F9;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .records-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 10px;
+            border-bottom: 1px solid #F1F5F9;
+            gap: 10px;
+        }
+
+        .record-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .record-name {
+            font-weight: bold;
+            color: #334155;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .record-date {
+            font-size: 0.8rem;
+            color: #94A3B8;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: #F1F5F9;
+            border: none;
+            border-radius: 8px;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #475569;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover { background: #E2E8F0; }
+        .btn-play { color: #4ECDC4; }
+        .btn-down { color: #45B7D1; }
+        .btn-del { color: #FF6B6B; }
+
+        .empty-msg {
+            text-align: center;
+            color: #94A3B8;
+            padding: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        /* 푸터 */
+        .footer {
+            margin-top: auto;
+            padding: 30px 0 20px 0;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--pastel-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <div class="header">
+            <h1><span class="material-icons-round">music_note</span> 여기 있어 피아노</h1>
+        </div>
+
+        <!-- 옥타브 선택기 -->
+        <div class="octave-selector">
+            <button class="octave-btn active" id="btnOctave1">1옥타브</button>
+            <button class="octave-btn" id="btnOctave2">2옥타브</button>
+        </div>
+
+        <!-- 녹음 컨트롤 패널 -->
+        <div class="controls-wrapper">
+            <div class="controls-panel">
+                <button id="recordBtn" class="control-btn btn-record"><span class="material-icons-round">fiber_manual_record</span> 녹음하기</button>
+                <button id="stopBtn" class="control-btn btn-stop"><span class="material-icons-round">stop</span> 완료</button>
+                <button id="resetBtn" class="control-btn btn-reset"><span class="material-icons-round">replay</span> 처음으로</button>
+            </div>
+            <div id="recordStatus" class="record-status"></div>
+        </div>
+
+        <div class="piano-wrapper">
+            <!-- 오버레이 화면 -->
+            <div id="overlay">
+                <div class="status-text" id="statusText">
+                    <div class="spinner" id="spinner"></div>
+                    악기 소리를 불러오는 중...
+                </div>
+                <button class="start-btn" id="startBtn">연주 시작하기!</button>
+            </div>
+
+            <!-- 기본적으로 1옥타브 클래스 적용 -->
+            <div class="piano-container octave-1" id="pianoContainer">
+                <!-- 하얀 건반 (1옥타브 C4~C5) -->
+                <div class="key white" data-note="C4">도</div>
+                <div class="key white" data-note="D4">레</div>
+                <div class="key white" data-note="E4">미</div>
+                <div class="key white" data-note="F4">파</div>
+                <div class="key white" data-note="G4">솔</div>
+                <div class="key white" data-note="A4">라</div>
+                <div class="key white" data-note="B4">시</div>
+                <div class="key white" data-note="C5">도</div>
+
+                <!-- 2옥타브 확장 하얀 건반 (D5~C6) -->
+                <div class="key white" data-note="D5" data-oct="2">레</div>
+                <div class="key white" data-note="E5" data-oct="2">미</div>
+                <div class="key white" data-note="F5" data-oct="2">파</div>
+                <div class="key white" data-note="G5" data-oct="2">솔</div>
+                <div class="key white" data-note="A5" data-oct="2">라</div>
+                <div class="key white" data-note="B5" data-oct="2">시</div>
+                <div class="key white" data-note="C6" data-oct="2">도</div>
+
+                <!-- 검은 건반 1옥타브 -->
+                <div class="key black cs4" data-note="C#4"></div>
+                <div class="key black ds4" data-note="D#4"></div>
+                <div class="key black fs4" data-note="F#4"></div>
+                <div class="key black gs4" data-note="G#4"></div>
+                <div class="key black as4" data-note="A#4"></div>
+                
+                <!-- 검은 건반 2옥타브 확장 -->
+                <div class="key black cs5" data-note="C#5" data-oct="2"></div>
+                <div class="key black ds5" data-note="D#5" data-oct="2"></div>
+                <div class="key black fs5" data-note="F#5" data-oct="2"></div>
+                <div class="key black gs5" data-note="G#5" data-oct="2"></div>
+                <div class="key black as5" data-note="A#5" data-oct="2"></div>
+            </div>
+        </div>
+
+        <!-- 녹음 목록 패널 -->
+        <div class="records-container">
+            <h3><span class="material-icons-round">library_music</span> 나의 연주 목록</h3>
+            <ul id="recordsList" class="records-list">
+                <!-- Javascript로 렌더링 됨 -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        Created by. <a href="https://litt.ly/chichiboo" target="_blank">교육뮤지컬 꿈꾸는 치수쌤</a>
+    </footer>
+
+    <script>
+        // === 옥타브 전환 로직 ===
+        const btnOctave1 = document.getElementById('btnOctave1');
+        const btnOctave2 = document.getElementById('btnOctave2');
+        const pianoContainer = document.getElementById('pianoContainer');
+
+        btnOctave1.addEventListener('click', () => {
+            btnOctave1.classList.add('active');
+            btnOctave2.classList.remove('active');
+            pianoContainer.classList.replace('octave-2', 'octave-1');
+        });
+
+        btnOctave2.addEventListener('click', () => {
+            btnOctave2.classList.add('active');
+            btnOctave1.classList.remove('active');
+            pianoContainer.classList.replace('octave-1', 'octave-2');
+        });
+
+        // === Tone.js 오디오 로드 ===
+        const sampler = new Tone.Sampler({
+            urls: {
+                "C4": "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", "A4": "A4.mp3",
+                "C5": "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3", "A5": "A5.mp3", "C6": "C6.mp3"
+            },
+            release: 1,
+            baseUrl: "https://tonejs.github.io/audio/salamander/" 
+        });
+
+        // 오디오 라우팅 설정 (녹음용 스트림 분리)
+        const dest = Tone.context.createMediaStreamDestination();
+        sampler.connect(Tone.Destination); // 스피커 출력
+        sampler.connect(dest);             // 녹음기 출력
+
+        let recorder;
+        let audioChunks = [];
+        let isCancelled = false; // '처음으로' 클릭 상태 확인용
+        let currentAudioPlayer = null; // 현재 재생중인 목록 오디오
+
+        const overlay = document.getElementById('overlay');
+        const statusText = document.getElementById('statusText');
+        const spinner = document.getElementById('spinner');
+        const startBtn = document.getElementById('startBtn');
+
+        Tone.loaded().then(() => {
+            spinner.style.display = "none";
+            statusText.innerHTML = "피아노 준비 완료! 🎹";
+            startBtn.style.display = "block";
+
+            startBtn.addEventListener('click', async () => {
+                await Tone.start();
+
+                // MediaRecorder 초기화 (WebM 형식 선호, 안되면 브라우저 기본 포맷)
+                const options = { mimeType: 'audio/webm' };
+                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                    options.mimeType = 'audio/webm;codecs=opus';
+                }
+
+                try {
+                    recorder = new MediaRecorder(dest.stream, options);
+                } catch (e) {
+                    console.warn('WebM not supported, falling back to default MIME type.');
+                    recorder = new MediaRecorder(dest.stream); 
+                }
+
+                recorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
+                };
+
+                recorder.onstop = () => {
+                    if (isCancelled) {
+                        isCancelled = false;
+                        audioChunks = []; // 청크 비우기
+                        return; 
+                    }
+
+                    // 녹음 데이터가 없으면 무시
+                    if (audioChunks.length === 0) {
+                        alert("녹음된 소리가 없습니다.");
+                        resetUIAfterRecord();
+                        return;
+                    }
+
+                    // Blob 생성 (실제 저장된 MIME 타입 사용)
+                    const format = (recorder.mimeType || 'audio/webm').includes('mp4') ? 'mp4' : 'webm';
+                    const blob = new Blob(audioChunks, { type: recorder.mimeType || 'audio/webm' });
+                    audioChunks = []; // 초기화
+                    
+                    // 사용자에게 이름 묻기
+                    const fileName = prompt("녹음이 완료되었습니다!\n저장할 연주 이름을 적어주세요.", "나의 멋진 연주");
+                    
+                    if (fileName !== null && fileName.trim() !== "") {
+                        // Blob을 Base64 문자열로 변환하여 로컬스토리지에 저장
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.onloadend = () => {
+                            saveRecordToStorage(fileName.trim(), reader.result, format);
+                            renderRecords();
+                        }
+                    } else {
+                        // 취소 시 경고 없이 그냥 넘어가기 (사용자 경험 개선)
+                    }
+                    
+                    resetUIAfterRecord();
+                };
+
+                overlay.style.display = 'none';
+            });
+        });
+
+        // === 녹음 제어 로직 ===
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const recordStatus = document.getElementById('recordStatus');
+
+        function resetUIAfterRecord() {
+            stopBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+            recordBtn.style.display = 'flex';
+            recordStatus.innerText = "";
+        }
+
+        recordBtn.addEventListener('click', async () => {
+            if (!recorder) {
+                alert("녹음기를 아직 준비하지 못했습니다. 새로고침 후 다시 시도해주세요.");
+                return;
+            }
+            if (Tone.context.state !== 'running') {
+                await Tone.start(); 
+            }
+            
+            audioChunks = []; 
+            isCancelled = false;
+
+            try {
+                // 타임슬라이스(100ms)를 주어 데이터가 중간중간 ondataavailable로 넘어오게 함 (일부 브라우저 버그 방지)
+                recorder.start(100); 
+                
+                recordBtn.style.display = 'none';
+                stopBtn.style.display = 'flex';
+                resetBtn.style.display = 'flex';
+                recordStatus.innerText = "🔴 녹음 중입니다...";
+            } catch (e) {
+                console.error("녹음 시작 실패:", e);
+                alert("녹음을 시작할 수 없습니다.");
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (!recorder || recorder.state === "inactive") return;
+            recordStatus.innerText = "저장 중...";
+            recorder.stop();
+        });
+
+        // '처음으로' 버튼 - 녹음 취소
+        resetBtn.addEventListener('click', () => {
+            if (!recorder || recorder.state === "inactive") return;
+            isCancelled = true;
+            recorder.stop();
+            resetUIAfterRecord();
+        });
+
+        // === 건반 연주 로직 ===
+        const keys = document.querySelectorAll('.key');
+        const activeTouches = {};
+
+        function triggerNoteOn(key) {
+            if (!key.classList.contains('active')) {
+                const note = key.getAttribute('data-note');
+                if (note) { sampler.triggerAttack(note); key.classList.add('active'); }
+            }
+        }
+
+        function triggerNoteOff(key) {
+            const note = key.getAttribute('data-note');
+            if (note) { sampler.triggerRelease(note); key.classList.remove('active'); }
+        }
+
+        keys.forEach(key => {
+            key.addEventListener('mousedown', () => triggerNoteOn(key));
+            key.addEventListener('mouseup', () => triggerNoteOff(key));
+            key.addEventListener('mouseleave', () => triggerNoteOff(key));
+            key.addEventListener('touchstart', (e) => { e.preventDefault(); triggerNoteOn(key); }, { passive: false });
+            key.addEventListener('touchend', (e) => { e.preventDefault(); triggerNoteOff(key); }, { passive: false });
+            key.addEventListener('touchcancel', (e) => { e.preventDefault(); triggerNoteOff(key); }, { passive: false });
+        });
+
+        document.querySelector('.piano-container').addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (element && element.classList.contains('key')) {
+                    if (activeTouches[touch.identifier] !== element) {
+                        if (activeTouches[touch.identifier]) triggerNoteOff(activeTouches[touch.identifier]);
+                        triggerNoteOn(element);
+                        activeTouches[touch.identifier] = element;
+                    }
+                } else if (activeTouches[touch.identifier]) {
+                    triggerNoteOff(activeTouches[touch.identifier]);
+                    delete activeTouches[touch.identifier];
+                }
+            }
+        }, { passive: false });
+
+        document.querySelector('.piano-container').addEventListener('touchstart', (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (element && element.classList.contains('key')) activeTouches[touch.identifier] = element;
+            }
+        }, { passive: false });
+
+        // === 로컬 스토리지 목록 관리 로직 ===
+        const STORAGE_KEY = 'chichibooPianoRecords';
+        
+        function getRecords() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveRecordToStorage(name, base64data, ext) {
+            try {
+                const records = getRecords();
+                const newRecord = {
+                    id: Date.now(),
+                    name: name,
+                    date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString().slice(0,5),
+                    data: base64data,
+                    ext: ext
+                };
+                records.unshift(newRecord); // 최신 항목이 위로 오게
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            } catch (e) {
+                alert("기기의 저장 공간이 부족합니다. 이전 연주를 삭제해주세요!");
+            }
+        }
+
+        // 글로벌 함수 연결
+        window.playSavedRecord = (id) => {
+            if (currentAudioPlayer) {
+                currentAudioPlayer.pause();
+                currentAudioPlayer.currentTime = 0;
+            }
+            const record = getRecords().find(r => r.id === id);
+            if (record) {
+                currentAudioPlayer = new Audio(record.data);
+                currentAudioPlayer.play();
+            }
+        };
+
+        window.downloadRecord = (id) => {
+            const record = getRecords().find(r => r.id === id);
+            if (!record) return;
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = record.data;
+            a.download = `${record.name}.${record.ext}`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => document.body.removeChild(a), 100);
+        };
+
+        window.renameRecord = (id) => {
+            const records = getRecords();
+            const index = records.findIndex(r => r.id === id);
+            if (index === -1) return;
+            
+            const newName = prompt("새로운 이름을 입력하세요:", records[index].name);
+            if (newName && newName.trim() !== "") {
+                records[index].name = newName.trim();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                renderRecords();
+            }
+        };
+
+        window.deleteRecord = (id) => {
+            if (confirm("이 연주를 정말 삭제할까요?")) {
+                let records = getRecords();
+                records = records.filter(r => r.id !== id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                renderRecords();
+            }
+        };
+
+        // 목록 UI 렌더링
+        function renderRecords() {
+            const listEl = document.getElementById('recordsList');
+            const records = getRecords();
+            
+            listEl.innerHTML = '';
+            
+            if (records.length === 0) {
+                listEl.innerHTML = '<li class="empty-msg">아직 저장된 연주가 없어요.<br>녹음 버튼을 눌러 연주를 뽐내보세요!</li>';
+                return;
+            }
+
+            records.forEach(r => {
+                const li = document.createElement('li');
+                li.className = 'record-item';
+                li.innerHTML = `
+                    <div class="record-info">
+                        <span class="record-name">${r.name}</span>
+                        <span class="record-date">${r.date}</span>
+                    </div>
+                    <div class="record-actions">
+                        <button class="action-btn btn-play" onclick="playSavedRecord(${r.id})" title="듣기"><span class="material-icons-round">play_arrow</span></button>
+                        <button class="action-btn" onclick="renameRecord(${r.id})" title="이름변경"><span class="material-icons-round">edit</span></button>
+                        <button class="action-btn btn-down" onclick="downloadRecord(${r.id})" title="다운로드"><span class="material-icons-round">download</span></button>
+                        <button class="action-btn btn-del" onclick="deleteRecord(${r.id})" title="삭제"><span class="material-icons-round">delete</span></button>
+                    </div>
+                `;
+                listEl.appendChild(li);
+            });
+        }
+
+        // 초기 목록 불러오기
+        renderRecords();
+
+    </script>
+</body>
+</html>
