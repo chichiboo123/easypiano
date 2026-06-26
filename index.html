@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>여기 있어 피아노 (Easy Piano)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>">
+
 
     <!-- 폰트 및 아이콘 -->
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard-gov-dynamic-subset.css" />
@@ -764,6 +766,14 @@
         /* ===================================================================
          * Tone.js 오디오 로드 (오픈소스 Tone.js Sampler - Salamander 그랜드 피아노 샘플)
          * =================================================================== */
+        // 오디오 라우팅 설정 (녹음용 스트림 분리)
+        const dest = Tone.context.createMediaStreamDestination();
+
+        // 실제 연주에 사용되는 악기. 샘플 로딩에 성공하면 Sampler,
+        // 네트워크 문제로 샘플을 못 불러오면 내장 신디(PolySynth)로 대체됩니다.
+        let instrument = null;
+        let usingFallback = false;
+
         const sampler = new Tone.Sampler({
             urls: {
                 "C4": "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", "A4": "A4.mp3",
@@ -772,11 +782,22 @@
             release: 1,
             baseUrl: "https://tonejs.github.io/audio/salamander/"
         });
-
-        // 오디오 라우팅 설정 (녹음용 스트림 분리)
-        const dest = Tone.context.createMediaStreamDestination();
         sampler.connect(Tone.Destination); // 스피커 출력
         sampler.connect(dest);             // 녹음기 출력
+
+        // 샘플 로딩 실패 시 사용할 폴백 신디사이저
+        function useSynthFallback() {
+            if (usingFallback) return;
+            usingFallback = true;
+            const synth = new Tone.PolySynth(Tone.Synth);
+            synth.set({
+                oscillator: { type: 'triangle' },
+                envelope: { attack: 0.005, decay: 0.3, sustain: 0.4, release: 1.2 }
+            });
+            synth.connect(Tone.Destination);
+            synth.connect(dest);
+            instrument = synth;
+        }
 
         // ===== 공용 DOM =====
         const startScreen = document.getElementById('startScreen');
@@ -804,11 +825,34 @@
         let isCancelled = false;
         let currentAudioPlayer = null;
 
-        Tone.loaded().then(() => {
+        let audioReady = false;
+        function markAudioReady() {
+            if (audioReady) return;
+            audioReady = true;
             spinner.style.display = "none";
-            statusText.innerHTML = "피아노 준비 완료! 🎹";
+            statusText.innerHTML = usingFallback ? "준비 완료! 🎹 (기본 음색)" : "피아노 준비 완료! 🎹";
             startBtn.style.display = "block";
+        }
 
+        // 1) 샘플 로딩 성공 → Sampler 사용
+        Tone.loaded().then(() => {
+            if (!usingFallback) instrument = sampler;
+            markAudioReady();
+        }).catch(() => {
+            // 2) 로딩 중 오류 → 내장 신디로 대체
+            useSynthFallback();
+            markAudioReady();
+        });
+
+        // 3) 일정 시간 안에 샘플이 안 오면(타임아웃) 내장 신디로 대체하여 무한 대기 방지
+        setTimeout(() => {
+            if (!audioReady) {
+                useSynthFallback();
+                markAudioReady();
+            }
+        }, 8000);
+
+        {
             startBtn.addEventListener('click', async () => {
                 await Tone.start();
 
@@ -833,7 +877,7 @@
                 startScreen.hidden = true;
                 modeScreen.hidden = false;
             });
-        });
+        }
 
         /* ===================================================================
          * 모드 전환
@@ -853,7 +897,7 @@
         }
 
         function releaseAll() {
-            try { sampler.releaseAll(); } catch (e) {}
+            try { if (instrument) instrument.releaseAll(); } catch (e) {}
             document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
         }
 
@@ -922,7 +966,7 @@
             // 서스테인 중 같은 음을 다시 누르면 예약된 release 취소
             if (pendingRelease[note]) { clearTimeout(pendingRelease[note]); delete pendingRelease[note]; }
             if (!key.classList.contains('active')) {
-                sampler.triggerAttack(note);
+                instrument.triggerAttack(note);
                 key.classList.add('active');
             }
         }
@@ -934,12 +978,12 @@
                 // 페달 ON: 일정 시간 소리를 유지한 뒤 release
                 if (pendingRelease[note]) clearTimeout(pendingRelease[note]);
                 pendingRelease[note] = setTimeout(() => {
-                    sampler.triggerRelease(note);
+                    instrument.triggerRelease(note);
                     key.classList.remove('active');
                     delete pendingRelease[note];
                 }, SUSTAIN_MS);
             } else {
-                sampler.triggerRelease(note);
+                instrument.triggerRelease(note);
                 key.classList.remove('active');
             }
         }
@@ -1010,7 +1054,7 @@
 
         function playChord(notes) {
             const dur = sustainOn ? SUSTAIN_MS / 1000 : 1.2;
-            sampler.triggerAttackRelease(notes, dur);
+            instrument.triggerAttackRelease(notes, dur);
             notes.forEach(n => {
                 const k = keyByNote(n);
                 if (k) {
@@ -1115,7 +1159,7 @@
             clearVocalHighlight();
 
             const note = seq[vocalIdx];
-            sampler.triggerAttackRelease(note, (vocalSpeedMs / 1000) * 0.9);
+            instrument.triggerAttackRelease(note, (vocalSpeedMs / 1000) * 0.9);
 
             const k = keyByNote(note);
             if (k) k.classList.add('active');
