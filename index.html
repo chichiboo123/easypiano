@@ -209,33 +209,31 @@
             .mode-card p { font-size: 0.72rem; }
         }
 
-        /* ================= 상단 바 (앱 화면) ================= */
-        .top-bar {
+        /* ================= 페이지 상단 바 (뒤로가기 · 설정) ================= */
+        .topbar {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             width: 95vw;
             max-width: 800px;
-            margin-bottom: 15px;
+            min-height: 40px;
+            margin: 4px auto 0;
         }
+        .topbar .spacer { flex: 1; }
         .back-btn {
             display: flex; align-items: center; gap: 4px;
             background: var(--card-bg);
             border: none;
             border-radius: 18px;
-            padding: 8px 16px;
+            padding: 9px 16px;
             font-family: inherit;
             font-weight: bold;
             color: var(--text-color);
             cursor: pointer;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
         }
         .back-btn:active { transform: translateY(2px); }
-        .mode-title {
-            font-family: 'Black Han Sans', sans-serif;
-            font-size: 1.4rem;
-            color: var(--text-color);
-        }
+        .back-btn { white-space: nowrap; }
 
         /* 옥타브 선택기 */
         .octave-selector {
@@ -635,13 +633,13 @@
         /* ================= 설정 토글 (다크모드 · 건반 한글표기) ================= */
         .settings-bar {
             display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 10px;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
         }
         .toggle-btn {
             display: flex; align-items: center; gap: 5px;
-            padding: 7px 14px;
+            padding: 7px 12px;
             border-radius: 16px;
             border: 2px solid var(--inset-bg);
             background: var(--card-bg);
@@ -658,6 +656,7 @@
             background: var(--inset-bg);
         }
         .toggle-btn .material-icons-round { font-size: 18px; }
+        .toggle-btn { white-space: nowrap; }
 
         /* 건반 한글표기 끄기 */
         .piano-container.hide-labels .key.white { color: transparent; }
@@ -756,13 +755,17 @@
 <body>
 
     <div class="main-content">
-        <div class="header">
-            <h1><span class="material-icons-round">music_note</span> 여기 있어 피아노</h1>
-            <div class="subtitle">Easy Piano</div>
+        <div class="topbar">
+            <button class="back-btn" id="backBtn" hidden><span class="material-icons-round">arrow_back</span> 모드 선택</button>
+            <div class="spacer"></div>
             <div class="settings-bar">
                 <button class="toggle-btn" id="darkToggle"><span class="material-icons-round">dark_mode</span> 어둡게</button>
                 <button class="toggle-btn active" id="labelToggle"><span class="material-icons-round">abc</span> 계이름</button>
             </div>
+        </div>
+        <div class="header">
+            <h1>여기 있어 피아노</h1>
+            <div class="subtitle">Easy Piano</div>
         </div>
 
         <!-- ===== 시작/로딩 화면 ===== -->
@@ -795,11 +798,6 @@
 
         <!-- ===== 앱(연주) 화면 ===== -->
         <div id="appScreen" hidden>
-
-            <div class="top-bar">
-                <button class="back-btn" id="backBtn"><span class="material-icons-round">arrow_back</span> 모드 선택</button>
-                <span class="mode-title" id="modeTitle">기본 모드</span>
-            </div>
 
             <!-- 기본 모드: 옥타브 선택기 -->
             <div class="octave-selector" id="octaveSelector">
@@ -844,12 +842,12 @@
                     </div>
                 </div>
                 <div class="vocal-row">
-                    <span class="vocal-label">시작음</span>
+                    <span class="vocal-label">시작 조</span>
                     <div class="pattern-selector" id="tonicSelector">
-                        <button class="pattern-btn active" data-tonic="C4">도(C)</button>
-                        <button class="pattern-btn" data-tonic="D4">레(D)</button>
-                        <button class="pattern-btn" data-tonic="E4">미(E)</button>
-                        <button class="pattern-btn" data-tonic="F4">파(F)</button>
+                        <button class="pattern-btn active" data-tonic="C4">C</button>
+                        <button class="pattern-btn" data-tonic="D4">D</button>
+                        <button class="pattern-btn" data-tonic="E4">E</button>
+                        <button class="pattern-btn" data-tonic="F4">F</button>
                     </div>
                 </div>
                 <div class="vocal-row">
@@ -979,7 +977,6 @@
         const modeScreen = document.getElementById('modeScreen');
         const appScreen = document.getElementById('appScreen');
         const backBtn = document.getElementById('backBtn');
-        const modeTitle = document.getElementById('modeTitle');
         const pianoContainer = document.getElementById('pianoContainer');
         const octaveSelector = document.getElementById('octaveSelector');
         const basicControls = document.getElementById('basicControls');
@@ -1054,8 +1051,6 @@
         /* ===================================================================
          * 모드 전환
          * =================================================================== */
-        const MODE_TITLES = { basic: '기본 모드', chord: '코드 모드', vocal: '발성 모드' };
-
         function setOctave(n) {
             if (n === 2) {
                 pianoContainer.classList.replace('octave-1', 'octave-2');
@@ -1075,7 +1070,6 @@
 
         function enterMode(mode) {
             currentMode = mode;
-            modeTitle.textContent = MODE_TITLES[mode];
 
             // 진행 중인 발성/소리 정리
             stopVocal();
@@ -1105,6 +1099,7 @@
 
             modeScreen.hidden = true;
             appScreen.hidden = false;
+            backBtn.hidden = false;
         }
 
         document.querySelectorAll('.mode-card').forEach(card => {
@@ -1122,6 +1117,7 @@
             }
             appScreen.hidden = true;
             modeScreen.hidden = false;
+            backBtn.hidden = true;
         });
 
         /* ===================================================================
@@ -1143,9 +1139,12 @@
         function triggerNoteOn(key) {
             const note = key.getAttribute('data-note');
             if (!note) return;
-            // 서스테인 중 같은 음을 다시 누르면 예약된 release 취소
-            if (pendingRelease[note]) { clearTimeout(pendingRelease[note]); delete pendingRelease[note]; }
-            if (!key.classList.contains('active')) {
+            // 서스테인(또는 코드)으로 울리고 있던 음이면 예약된 release/하이라이트 해제
+            let ringing = false;
+            if (pendingRelease[note]) { clearTimeout(pendingRelease[note]); delete pendingRelease[note]; ringing = true; }
+            if (pendingRelease['hl-' + note]) { clearTimeout(pendingRelease['hl-' + note]); delete pendingRelease['hl-' + note]; ringing = true; }
+            // 새로 누른 음이거나, 울리는 중인 음이면 다시 쳐서 끝나기 전에도 연주 가능
+            if (!key.classList.contains('active') || ringing) {
                 instrument.triggerAttack(note);
                 key.classList.add('active');
             }
@@ -1316,15 +1315,15 @@
          * =================================================================== */
         const SOLF_CYCLE = ['도','레','미','파','솔','라','시'];
         const MAJOR_STEPS = [0,2,4,5,7,9,11]; // 메이저 음계 반음 간격
-        // 한 묶음(unit)의 음 모양 — 음계 단계(scale step) 오프셋
+        // 한 묶음(unit)의 음 모양 — 메이저 음계의 단계(scale degree) 오프셋
         const VOCAL_SHAPES = {
-            5: [0,1,2,1,0],            // 도-레-미-레-도
-            9: [0,1,2,3,4,3,2,1,0]     // 도-레-미-파-솔-파-미-레-도
+            5: [0,2,4,2,0],            // 5음 아르페지오: 도-미-솔-미-도 (1-3-5-3-1도)
+            9: [0,1,2,3,4,3,2,1,0]     // 9음 순차: 도-레-미-파-솔-파-미-레-도 (1~5도 왕복)
         };
-        // 묶음이 시작하는 위치(시작음 → 한 옥타브 위까지 8단계)
-        const START_IDXS = [0,1,2,3,4,5,6,7];
+        // 발성이 진행되는 조(코드) 순서: C ~ B
+        const VOCAL_KEYS = ['C4','D4','E4','F4','G4','A4','B4'];
 
-        // 음이름 ↔ MIDI 변환 (시작음 이조용)
+        // 음이름 ↔ MIDI 변환 (조 이조용)
         function noteToMidi(n) {
             const m = n.match(/^([A-G]#?)(\d)$/);
             return (parseInt(m[2], 10) + 1) * 12 + CHROMA.indexOf(m[1]);
@@ -1340,8 +1339,7 @@
 
         let vocalShape = 9;             // 5 | 9
         let vocalDirection = 'updown';  // 'updown' | 'up' | 'down'
-        let vocalTonic = 'C4';          // 시작음
-        let vocalScale = buildScaleFromTonic(vocalTonic);
+        let vocalStartKey = 'C4';       // 발성을 시작할 조 (C~)
         let vocalSpeedMs = 530;         // slider 6 기준
         let vocalPlaying = false;
         let vocalTimer = null;
@@ -1356,26 +1354,30 @@
 
         function speedFromSlider(v) { return 950 - v * 70; } // 1→880ms ... 10→250ms
 
-        // 방향/음개수/시작음에 따라 전체 발성 묶음 목록을 생성
+        // 방향/음개수/시작조에 따라 전체 발성 묶음 목록을 생성
+        // 한 묶음 = 한 조(코드)에서의 패턴, 조를 C~B로 옮겨 가며 진행
         function buildVocalUnits() {
             const shape = VOCAL_SHAPES[vocalShape];
-            const makeUnit = (start) => {
-                const notes = shape.map(o => vocalScale[start + o]);
-                // 계이름은 음계 단계(이동 도법)로 계산 → 시작음이 바뀌어도 도레미 유지
-                const solf = shape.map(o => SOLF_CYCLE[(start + o) % 7]);
+            const startIdx = VOCAL_KEYS.indexOf(vocalStartKey);
+            const keyList = VOCAL_KEYS.slice(startIdx); // 시작 조 ~ B
+            const makeUnit = (tonic) => {
+                const scale = buildScaleFromTonic(tonic);
+                const notes = shape.map(o => scale[o]);
+                // 계이름은 이동 도법 → 조가 바뀌어도 도-미-솔 / 도-레-미 유지
+                const solf = shape.map(o => SOLF_CYCLE[o % 7]);
                 return { notes, solf };
             };
-            let starts;
+            let keys;
             if (vocalDirection === 'up') {
-                starts = [...START_IDXS];                                  // 낮은 도 → 높은 도
+                keys = [...keyList];                              // 낮은 조 → 높은 조
             } else if (vocalDirection === 'down') {
-                starts = [...START_IDXS].reverse();                       // 높은 도 → 낮은 도
+                keys = [...keyList].reverse();                    // 높은 조 → 낮은 조
             } else { // updown: 올라갔다 내려오기 (양 끝 중복 없이 반복)
-                const up = [...START_IDXS];
-                const down = START_IDXS.slice(1, -1).reverse();
-                starts = up.concat(down);
+                const up = [...keyList];
+                const down = keyList.slice(1, -1).reverse();
+                keys = up.concat(down);
             }
-            vocalUnits = starts.map(makeUnit);
+            vocalUnits = keys.map(makeUnit);
             uPtr = 0; nPtr = 0;
         }
 
@@ -1481,13 +1483,12 @@
             });
         });
 
-        // 시작음(조) 선택
+        // 시작 조 선택
         document.querySelectorAll('#tonicSelector .pattern-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('#tonicSelector .pattern-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                vocalTonic = btn.dataset.tonic;
-                vocalScale = buildScaleFromTonic(vocalTonic);
+                vocalStartKey = btn.dataset.tonic;
                 clearVocalHighlight();
                 buildVocalUnits();
                 renderGuide(vocalUnits[0]);
@@ -1574,7 +1575,7 @@
         function applyLabels(on) {
             pianoContainer.classList.toggle('hide-labels', !on);
             labelToggle.classList.toggle('active', on);
-            labelToggle.innerHTML = `<span class="material-icons-round">abc</span> 계이름 ${on ? '켜짐' : '꺼짐'}`;
+            labelToggle.innerHTML = `<span class="material-icons-round">abc</span> 계이름`;
         }
 
         applyDark(!!prefs.dark);
