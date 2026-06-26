@@ -139,20 +139,20 @@
         /* ================= 모드 선택 화면 ================= */
         #modeScreen {
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex-wrap: nowrap;
+            gap: 12px;
             justify-content: center;
             margin-top: 20px;
             width: 95vw;
-            max-width: 850px;
+            max-width: 640px;
         }
 
         .mode-card {
-            flex: 1 1 220px;
-            max-width: 260px;
+            flex: 1 1 0;
+            min-width: 0;
             background: white;
-            border-radius: 24px;
-            padding: 30px 20px;
+            border-radius: 20px;
+            padding: 20px 10px;
             text-align: center;
             cursor: pointer;
             border: 3px solid transparent;
@@ -163,12 +163,12 @@
         .mode-card:active { transform: translateY(-1px); }
 
         .mode-card .mode-icon {
-            width: 80px; height: 80px;
+            width: 60px; height: 60px;
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 18px auto;
+            margin: 0 auto 12px auto;
         }
-        .mode-card .mode-icon .material-icons-round { font-size: 42px; color: #fff; }
+        .mode-card .mode-icon .material-icons-round { font-size: 32px; color: #fff; }
         .mode-card.basic .mode-icon { background: var(--pastel-blue); }
         .mode-card.chord .mode-icon { background: var(--pastel-pink); }
         .mode-card.vocal .mode-icon { background: var(--pastel-green); }
@@ -176,8 +176,16 @@
         .mode-card.chord:hover { border-color: var(--pastel-pink); }
         .mode-card.vocal:hover { border-color: var(--pastel-green); }
 
-        .mode-card h2 { margin: 0 0 8px 0; font-size: 1.5rem; color: var(--text-color); }
-        .mode-card p { margin: 0; font-size: 0.95rem; color: #94A3B8; line-height: 1.5; }
+        .mode-card h2 { margin: 0 0 6px 0; font-size: 1.25rem; color: var(--text-color); }
+        .mode-card p { margin: 0; font-size: 0.85rem; color: #94A3B8; line-height: 1.4; white-space: nowrap; }
+
+        @media (max-width: 420px) {
+            .mode-card { padding: 16px 6px; }
+            .mode-card .mode-icon { width: 50px; height: 50px; }
+            .mode-card .mode-icon .material-icons-round { font-size: 26px; }
+            .mode-card h2 { font-size: 1.05rem; }
+            .mode-card p { font-size: 0.72rem; }
+        }
 
         /* ================= 상단 바 (앱 화면) ================= */
         .top-bar {
@@ -242,15 +250,15 @@
             flex-direction: column;
             align-items: center;
             margin-bottom: 20px;
-            min-height: 60px; /* 고정 높이로 레이아웃 흔들림 방지 */
             justify-content: center;
         }
 
         .controls-panel {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .control-btn {
@@ -379,14 +387,15 @@
         }
         .vocal-label { font-weight: bold; color: var(--text-color); }
         .pattern-selector {
-            display: flex; gap: 8px;
+            display: flex; gap: 6px;
             background: #E2E8F0; padding: 5px; border-radius: 18px;
+            flex-wrap: wrap; justify-content: center;
         }
         .pattern-btn {
-            padding: 8px 18px; border: none; border-radius: 14px;
+            padding: 8px 16px; border: none; border-radius: 14px;
             background: transparent; color: #64748B;
             font-family: inherit; font-weight: bold; cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s; white-space: nowrap;
         }
         .pattern-btn.active { background: white; color: var(--text-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
@@ -639,17 +648,17 @@
             <div class="mode-card basic" data-mode="basic">
                 <div class="mode-icon"><span class="material-icons-round">piano</span></div>
                 <h2>기본</h2>
-                <p>자유롭게 건반을 연주하고<br>나의 연주를 녹음해요.</p>
+                <p>건반 연주 · 녹음</p>
             </div>
             <div class="mode-card chord" data-mode="chord">
                 <div class="mode-icon"><span class="material-icons-round">grid_view</span></div>
                 <h2>코드</h2>
-                <p>코드 버튼을 눌러<br>멋진 화음을 연주해요.</p>
+                <p>코드로 화음 연주</p>
             </div>
             <div class="mode-card vocal" data-mode="vocal">
                 <div class="mode-icon"><span class="material-icons-round">graphic_eq</span></div>
                 <h2>발성</h2>
-                <p>음계를 따라<br>발성 연습을 해요.</p>
+                <p>음계 발성 연습</p>
             </div>
         </div>
 
@@ -667,12 +676,15 @@
                 <button class="octave-btn" id="btnOctave2">2옥타브</button>
             </div>
 
-            <!-- 기본 모드: 녹음 컨트롤 패널 -->
+            <!-- 기본 모드: 녹음 컨트롤 패널 + 서스테인 페달 -->
             <div class="controls-wrapper" id="basicControls">
                 <div class="controls-panel">
                     <button id="recordBtn" class="control-btn btn-record"><span class="material-icons-round">fiber_manual_record</span> 녹음하기</button>
                     <button id="stopBtn" class="control-btn btn-stop"><span class="material-icons-round">stop</span> 완료</button>
                     <button id="resetBtn" class="control-btn btn-reset"><span class="material-icons-round">replay</span> 처음으로</button>
+                    <button class="sustain-btn" id="sustainBtnBasic">
+                        <span class="material-icons-round">all_inclusive</span> 서스테인 페달 (꺼짐)
+                    </button>
                 </div>
                 <div id="recordStatus" class="record-status"></div>
             </div>
@@ -687,13 +699,21 @@
                 <div id="chordGroups"><!-- JS로 렌더링 --></div>
             </div>
 
-            <!-- 발성 모드: 패턴/속도/재생 컨트롤 -->
+            <!-- 발성 모드: 방향/음개수/속도/재생 컨트롤 -->
             <div class="vocal-panel" id="vocalControls" hidden>
                 <div class="vocal-row">
+                    <span class="vocal-label">방향</span>
+                    <div class="pattern-selector" id="dirSelector">
+                        <button class="pattern-btn active" data-dir="updown">오르락내리락</button>
+                        <button class="pattern-btn" data-dir="up">오르막길</button>
+                        <button class="pattern-btn" data-dir="down">내리막길</button>
+                    </div>
+                </div>
+                <div class="vocal-row">
                     <span class="vocal-label">음 개수</span>
-                    <div class="pattern-selector">
-                        <button class="pattern-btn" data-pattern="5">5음</button>
-                        <button class="pattern-btn active" data-pattern="9">9음</button>
+                    <div class="pattern-selector" id="shapeSelector">
+                        <button class="pattern-btn" data-shape="5">5음</button>
+                        <button class="pattern-btn active" data-shape="9">9음</button>
                     </div>
                 </div>
                 <div class="vocal-row">
@@ -920,8 +940,11 @@
 
             // 모드별 옥타브 구성
             if (mode === 'chord') setOctave(2);       // 코드 화음을 다 보여주기 위해 2옥타브
-            else if (mode === 'vocal') setOctave(1);  // 발성은 1옥타브
+            else if (mode === 'vocal') setOctave(2);  // 발성은 음이 올라가므로 2옥타브
             else setOctave(1);
+
+            // 발성 모드 초기화 (가이드/묶음 준비)
+            if (mode === 'vocal') resetVocal();
 
             modeScreen.hidden = true;
             appScreen.hidden = false;
@@ -1099,48 +1122,85 @@
         }
         buildChordButtons();
 
-        // 서스테인 페달 토글
-        const sustainBtn = document.getElementById('sustainBtn');
+        // 서스테인 페달 토글 (기본 모드 · 코드 모드 공용, 상태 동기화)
+        const sustainButtons = [
+            document.getElementById('sustainBtn'),
+            document.getElementById('sustainBtnBasic')
+        ].filter(Boolean);
         function updateSustainUI() {
-            sustainBtn.classList.toggle('active', sustainOn);
-            sustainBtn.innerHTML = `<span class="material-icons-round">all_inclusive</span> 서스테인 페달 (${sustainOn ? '켜짐' : '꺼짐'})`;
+            sustainButtons.forEach(btn => {
+                btn.classList.toggle('active', sustainOn);
+                btn.innerHTML = `<span class="material-icons-round">all_inclusive</span> 서스테인 페달 (${sustainOn ? '켜짐' : '꺼짐'})`;
+            });
         }
-        sustainBtn.addEventListener('click', () => {
-            sustainOn = !sustainOn;
-            updateSustainUI();
-            // 페달을 끄면 유지 중인 소리를 정리
-            if (!sustainOn) releaseAll();
+        sustainButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sustainOn = !sustainOn;
+                updateSustainUI();
+                // 페달을 끄면 유지 중인 소리를 정리
+                if (!sustainOn) releaseAll();
+            });
         });
 
         /* ===================================================================
          * 발성 모드
          * =================================================================== */
-        const SOLFEGE = { 'C4':'도','D4':'레','E4':'미','F4':'파','G4':'솔','A4':'라','B4':'시','C5':'도' };
-        const VOCAL_PATTERNS = {
-            5: ['C4','D4','E4','D4','C4'],                          // 도-레-미-레-도
-            9: ['C4','D4','E4','F4','G4','F4','E4','D4','C4']       // 도-레-미-파-솔-파-미-레-도
+        // C 메이저 음계(흰 건반) C4 ~ C6 / 계이름
+        const SCALE = ['C4','D4','E4','F4','G4','A4','B4','C5','D5','E5','F5','G5','A5','B5','C6'];
+        const SOLF_CYCLE = ['도','레','미','파','솔','라','시'];
+        // 한 묶음(unit)의 음 모양 — 음계 단계(scale step) 오프셋
+        const VOCAL_SHAPES = {
+            5: [0,1,2,1,0],            // 도-레-미-레-도
+            9: [0,1,2,3,4,3,2,1,0]     // 도-레-미-파-솔-파-미-레-도
         };
+        // 묶음이 시작하는 위치(낮은 도 C4 ~ 높은 도 C5)
+        const START_IDXS = [0,1,2,3,4,5,6,7];
 
-        let vocalPattern = 9;
-        let vocalSpeedMs = 530;   // slider 6 기준
+        let vocalShape = 9;             // 5 | 9
+        let vocalDirection = 'updown';  // 'updown' | 'up' | 'down'
+        let vocalSpeedMs = 530;         // slider 6 기준
         let vocalPlaying = false;
-        let vocalIdx = 0;
         let vocalTimer = null;
         let lastVocalNote = null;
+
+        let vocalUnits = [];  // [{notes:[...], solf:[...]}, ...]
+        let uPtr = 0, nPtr = 0;
 
         const vocalPlayBtn = document.getElementById('vocalPlayBtn');
         const speedSlider = document.getElementById('speedSlider');
         const vocalGuide = document.getElementById('vocalGuide');
 
         function speedFromSlider(v) { return 950 - v * 70; } // 1→880ms ... 10→250ms
+        function solfOf(note) { const i = SCALE.indexOf(note); return i < 0 ? note : SOLF_CYCLE[i % 7]; }
 
-        function buildVocalGuide() {
+        // 방향/음개수에 따라 전체 발성 묶음 목록을 생성
+        function buildVocalUnits() {
+            const shape = VOCAL_SHAPES[vocalShape];
+            const makeUnit = (start) => {
+                const notes = shape.map(o => SCALE[start + o]);
+                return { notes, solf: notes.map(solfOf) };
+            };
+            let starts;
+            if (vocalDirection === 'up') {
+                starts = [...START_IDXS];                                  // 낮은 도 → 높은 도
+            } else if (vocalDirection === 'down') {
+                starts = [...START_IDXS].reverse();                       // 높은 도 → 낮은 도
+            } else { // updown: 올라갔다 내려오기 (양 끝 중복 없이 반복)
+                const up = [...START_IDXS];
+                const down = START_IDXS.slice(1, -1).reverse();
+                starts = up.concat(down);
+            }
+            vocalUnits = starts.map(makeUnit);
+            uPtr = 0; nPtr = 0;
+        }
+
+        function renderGuide(unit) {
             vocalGuide.innerHTML = '';
-            VOCAL_PATTERNS[vocalPattern].forEach((note, i) => {
+            unit.solf.forEach((s, i) => {
                 const span = document.createElement('span');
                 span.className = 'guide-note';
                 span.dataset.idx = i;
-                span.textContent = SOLFEGE[note] || note;
+                span.textContent = s;
                 vocalGuide.appendChild(span);
             });
         }
@@ -1155,21 +1215,30 @@
         }
 
         function vocalStep() {
-            const seq = VOCAL_PATTERNS[vocalPattern];
+            if (!vocalUnits.length) buildVocalUnits();
+            const unit = vocalUnits[uPtr];
+
+            if (nPtr === 0) renderGuide(unit);   // 새 묶음 시작 시 가이드 갱신
             clearVocalHighlight();
 
-            const note = seq[vocalIdx];
+            const note = unit.notes[nPtr];
             instrument.triggerAttackRelease(note, (vocalSpeedMs / 1000) * 0.9);
 
             const k = keyByNote(note);
             if (k) k.classList.add('active');
             lastVocalNote = note;
-            const guideEl = vocalGuide.querySelector(`.guide-note[data-idx="${vocalIdx}"]`);
+            const guideEl = vocalGuide.querySelector(`.guide-note[data-idx="${nPtr}"]`);
             if (guideEl) guideEl.classList.add('current');
 
-            const isLast = (vocalIdx === seq.length - 1);
-            vocalIdx = (vocalIdx + 1) % seq.length;
-            const delay = isLast ? vocalSpeedMs + 500 : vocalSpeedMs; // 한 바퀴 끝에서 잠깐 쉼
+            // 다음 위치로 이동
+            nPtr++;
+            let endOfUnit = false;
+            if (nPtr >= unit.notes.length) {
+                nPtr = 0;
+                uPtr = (uPtr + 1) % vocalUnits.length;
+                endOfUnit = true;
+            }
+            const delay = endOfUnit ? vocalSpeedMs + 350 : vocalSpeedMs; // 묶음 사이 잠깐 쉼
             vocalTimer = setTimeout(vocalStep, delay);
         }
 
@@ -1190,23 +1259,40 @@
             }
         }
 
+        // 발성 모드 진입/설정 변경 시 초기화
+        function resetVocal() {
+            buildVocalUnits();
+            if (vocalUnits.length) renderGuide(vocalUnits[0]);
+        }
+
         vocalPlayBtn.addEventListener('click', () => {
             if (vocalPlaying) stopVocal();
             else startVocal();
         });
 
-        document.querySelectorAll('.pattern-btn').forEach(btn => {
+        // 방향 선택
+        document.querySelectorAll('#dirSelector .pattern-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#dirSelector .pattern-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                vocalPattern = parseInt(btn.dataset.pattern, 10);
-                vocalIdx = 0;
-                buildVocalGuide();
-                if (vocalPlaying) { // 재생 중 패턴 변경 시 부드럽게 이어가기
-                    if (vocalTimer) clearTimeout(vocalTimer);
-                    clearVocalHighlight();
-                    vocalStep();
-                }
+                vocalDirection = btn.dataset.dir;
+                clearVocalHighlight();
+                buildVocalUnits();
+                renderGuide(vocalUnits[0]);
+                if (vocalPlaying) { if (vocalTimer) clearTimeout(vocalTimer); vocalStep(); }
+            });
+        });
+
+        // 음 개수(5음/9음) 선택
+        document.querySelectorAll('#shapeSelector .pattern-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#shapeSelector .pattern-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                vocalShape = parseInt(btn.dataset.shape, 10);
+                clearVocalHighlight();
+                buildVocalUnits();
+                renderGuide(vocalUnits[0]);
+                if (vocalPlaying) { if (vocalTimer) clearTimeout(vocalTimer); vocalStep(); }
             });
         });
 
@@ -1214,7 +1300,7 @@
             vocalSpeedMs = speedFromSlider(parseInt(speedSlider.value, 10));
         });
 
-        buildVocalGuide();
+        resetVocal();
 
         /* ===================================================================
          * 녹음 제어 로직 (기본 모드)
