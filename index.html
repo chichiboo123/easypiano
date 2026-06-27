@@ -223,8 +223,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            width: 95vw;
-            max-width: 800px;
+            width: min(96vw, 1180px);
+            max-width: 1180px;
             min-height: 40px;
             margin: 4px auto 0;
         }
@@ -537,8 +537,9 @@
         @keyframes wiggle { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
 
         /* 코드 길이 (세그먼트) */
-        .len-row { display: grid; grid-template-columns: max-content 1fr; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .len-row { display: grid; grid-template-columns: max-content 1fr; align-items: center; gap: 12px; margin-bottom: 6px; }
         .len-label { font-weight: bold; color: var(--text-color); font-size: 0.92rem; white-space: nowrap; }
+        .chord-len-hint { font-size: 0.74rem; color: var(--muted); font-weight: bold; margin: 0 0 10px; padding-left: 2px; }
 
         /* 세그먼트 버튼 (KRDS 스타일) */
         .seg { display: flex; gap: 4px; background: var(--inset-bg); padding: 4px; border-radius: 14px; }
@@ -618,17 +619,31 @@
         @media (min-width: 1000px) and (min-aspect-ratio: 4/3) {
             #appScreen.chord-layout { width: 100%; }
             #appScreen.chord-layout .chord-panel {
-                width: min(96vw, 1280px);
-                max-width: 1280px;
+                width: min(96vw, 1180px);
+                max-width: 1180px;
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 18px;
-                align-items: start;
+                align-items: stretch;
             }
-            #appScreen.chord-layout .chord-tools { order: 1; }
-            #appScreen.chord-layout .chord-list { order: 2; max-height: min(58vh, 620px); overflow: auto; }
+            /* 좌우 열의 높이를 동일하게 (아코디언 펼친 상태 기준) */
+            #appScreen.chord-layout .chord-tools {
+                order: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            #appScreen.chord-layout .chord-tools .accomp-panel { flex: 1 1 auto; }
+            #appScreen.chord-layout .chord-list {
+                order: 2;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow: auto;
+            }
+            #appScreen.chord-layout .chord-list #chordGroups { flex: 1 1 auto; }
             #appScreen.chord-layout .accomp-panel { max-width: none; margin-bottom: 0; }
-            #appScreen.chord-layout .piano-wrapper { width: min(96vw, 1280px); max-width: 1280px; }
+            #appScreen.chord-layout .piano-wrapper { width: min(96vw, 1180px); max-width: 1180px; }
             #appScreen.chord-layout .piano-container { height: clamp(170px, 24vh, 260px); }
         }
 
@@ -1142,19 +1157,13 @@
                     <div class="prog-head">
                         <span class="prog-title"><span class="material-icons-round">queue_music</span> 코드 진행</span>
                         <div class="prog-actions">
+                            <button class="control-btn btn-acc-clear icon-btn" id="accClearBtn" title="전체 비우기" aria-label="전체 비우기"><span class="material-icons-round">delete_sweep</span><span class="btn-text">전체 비우기</span></button>
                             <button class="toggle-btn icon-btn" id="progUndoBtn" title="실행 취소" aria-label="실행 취소"><span class="material-icons-round">undo</span><span class="btn-text">실행 취소</span></button>
                             <button class="toggle-btn icon-btn" id="progRedoBtn" title="다시 실행" aria-label="다시 실행"><span class="material-icons-round">redo</span><span class="btn-text">다시 실행</span></button>
                             <button class="toggle-btn icon-btn" id="progEditBtn" title="편집" aria-label="편집"><span class="material-icons-round">edit</span><span class="btn-text">편집</span></button>
-                            <button class="control-btn btn-acc-clear icon-btn" id="accClearBtn" title="전체 비우기" aria-label="전체 비우기"><span class="material-icons-round">delete_sweep</span><span class="btn-text">전체 비우기</span></button>
                         </div>
                     </div>
                     <div class="prog-chart" id="progDisplay"></div>
-
-                    <!-- 다음에 추가할 코드 길이 -->
-                    <div class="len-row">
-                        <span class="len-label">코드 길이</span>
-                        <div class="seg" id="lengthSeg"></div>
-                    </div>
 
                     <!-- 2) 재생 (가장 큰 동작) -->
                     <div class="play-row">
@@ -1232,6 +1241,12 @@
                 </div>
 
                 <div class="chord-list">
+                    <!-- 다음에 추가할 코드 길이 (코드를 고르는 곳에서 바로 설정) -->
+                    <div class="len-row">
+                        <span class="len-label">코드 길이</span>
+                        <div class="seg" id="lengthSeg"></div>
+                    </div>
+                    <div class="chord-len-hint">한 마디: 클릭 · 2박: Ctrl+클릭 · 1박: Alt+클릭</div>
                     <div class="accidental-row"><div class="seg" id="accidentalSeg">
                     <button class="seg-btn active" data-accidental="natural">내추럴</button>
                     <button class="seg-btn" data-accidental="sharp"># 샵</button>
@@ -1512,6 +1527,13 @@
             document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
         }
 
+        // 넓은 비율 화면(좌우 2단 레이아웃)에서는 아코디언(반주 설정·저장/공유)을 펼친 상태를 기본으로
+        const wideChordMQ = window.matchMedia('(min-width: 1000px) and (min-aspect-ratio: 4/3)');
+        function applyWideChordDefaults() {
+            if (!wideChordMQ.matches) return;
+            document.querySelectorAll('#chordControls .acc-section').forEach(d => { d.open = true; });
+        }
+
         function enterMode(mode) {
             currentMode = mode;
             appScreen.classList.toggle('chord-layout', mode === 'chord');
@@ -1544,6 +1566,7 @@
             if (mode === 'chord') {
                 chordDisplay.innerHTML = '<div class="cd-empty">코드 버튼을 눌러보세요 🎶</div>';
                 if (editMode) toggleEdit(false); else renderProgression();
+                applyWideChordDefaults();
             }
 
             modeScreen.hidden = true;
@@ -1668,9 +1691,9 @@
         let chordAccidentalMode = 'natural';
         const CHORD_TYPES = [
             { name: 'major', label: '메이저',   suffix: '',     iv: [0,4,7],     cls: 'ct-major' },
-            { name: 'minor', label: '마이너',   suffix: 'm',    iv: [0,3,7],     cls: 'ct-minor' },
             { name: 'dom7',  label: '세븐(7)',  suffix: '7',    iv: [0,4,7,10],  cls: 'ct-dom7' },
             { name: 'maj7',  label: '메이저7',  suffix: 'M7',   iv: [0,4,7,11],  cls: 'ct-maj7' },
+            { name: 'minor', label: '마이너',   suffix: 'm',    iv: [0,3,7],     cls: 'ct-minor' },
             { name: 'min7',  label: '마이너7',  suffix: 'm7',   iv: [0,3,7,10],  cls: 'ct-min7' },
             { name: 'dim',   label: '디미니시', suffix: 'dim',  iv: [0,3,6],     cls: 'ct-dim' },
             { name: 'sus4',  label: '서스포(sus4)', suffix: 'sus4', iv: [0,5,7], cls: 'ct-sus4' },
@@ -1737,9 +1760,13 @@
                     btn.className = 'chord-btn ' + type.cls;
                     const chordLabel = root + type.suffix;
                     btn.textContent = chordLabel;
-                    btn.addEventListener('click', () => {
+                    btn.addEventListener('click', (e) => {
+                        // 코드 길이 단축키: 기본=선택한 길이 / Ctrl(⌘)=2박 / Alt=1박
+                        let beatsOverride = null;
+                        if (e.ctrlKey || e.metaKey) beatsOverride = 2;
+                        else if (e.altKey) beatsOverride = 1;
                         playChord(notes, chordLabel);   // 기존: 기본 코드 1회 재생 (유지)
-                        addCell(chordLabel, notes, root); // 확장: 코드 진행(셀)에 추가
+                        addCell(chordLabel, notes, root, beatsOverride); // 확장: 코드 진행(셀)에 추가
                         btn.classList.add('pressed');
                         setTimeout(() => btn.classList.remove('pressed'), 150);
                     });
@@ -1917,9 +1944,10 @@
             });
         }
 
-        // 코드를 진행(셀)에 추가
-        function addCell(label, notes, root) {
-            const beats = Math.min(nextCellBeats || beatsPerMeasure(), beatsPerMeasure());
+        // 코드를 진행(셀)에 추가 (beatsOverride: 단축키로 길이를 직접 지정할 때 사용)
+        function addCell(label, notes, root, beatsOverride = null) {
+            const want = beatsOverride != null ? beatsOverride : (nextCellBeats || beatsPerMeasure());
+            const beats = Math.max(1, Math.min(want, beatsPerMeasure()));
             progression.push({ label, notes: [...notes], root, beats });
             renderProgression();
             recordHistory();
