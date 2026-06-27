@@ -401,6 +401,9 @@
         .ct-min7  { background: var(--pastel-purple); }
         .ct-dim   { background: var(--pastel-orange); }
         .ct-sus4  { background: var(--inset-bg); }
+        .ct-add9  { background: #D4EFDF; }
+        .ct-sus2  { background: #F8D7E3; }
+        .ct-maj6  { background: #D6EAF8; }
 
         @media (max-width: 560px) {
             .chord-buttons { gap: 4px; }
@@ -1001,6 +1004,56 @@
         }
         .chord-display .cd-empty { font-size: 1rem; color: var(--muted); }
 
+        /* ================= 코드 현황 바 (이전·현재·다음) ================= */
+        .chord-status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 95vw;
+            max-width: 800px;
+            margin: 0 auto 8px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 8px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            box-sizing: border-box;
+            gap: 0;
+        }
+        .cs-item { flex: 1; text-align: center; padding: 4px 6px; }
+        .cs-cur   { flex: 1.6; }
+        .cs-label {
+            font-size: 0.62rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 1px;
+        }
+        .cs-chord {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-color);
+            opacity: 0.38;
+            line-height: 1.2;
+        }
+        .cs-cur .cs-chord {
+            font-family: 'Black Han Sans', sans-serif;
+            font-size: 1.9rem;
+            color: var(--heading);
+            opacity: 1;
+        }
+        .cs-notes { font-size: 0.78rem; color: var(--muted); font-weight: 600; min-height: 1em; }
+        .cs-sep {
+            color: var(--muted);
+            font-size: 1.3rem;
+            opacity: 0.3;
+            padding: 0 2px;
+            flex: 0;
+            user-select: none;
+        }
+        @media (min-width: 1000px) and (min-aspect-ratio: 4/3) {
+            #appScreen.chord-layout .chord-status-bar { width: min(96vw, 1180px); max-width: 1180px; }
+        }
+
         /* ================= 모달 ================= */
         #modalOverlay {
             position: fixed;
@@ -1161,18 +1214,9 @@
                 <div id="recordStatus" class="record-status"></div>
             </div>
 
-            <!-- 코드 모드: 코드 버튼 + 서스테인 페달 -->
+            <!-- 코드 모드: 코드 버튼 + 자동 반주 패널 -->
             <div class="chord-panel" id="chordControls" hidden>
                 <div class="chord-tools">
-                    <div class="chord-display" id="chordDisplay">
-                        <div class="cd-empty">코드 버튼을 눌러보세요 🎶</div>
-                    </div>
-                    <div class="sustain-row">
-                        <button class="sustain-btn" id="sustainBtn">
-                            <span class="material-icons-round">all_inclusive</span> 서스테인 페달 (꺼짐)
-                        </button>
-                    </div>
-
                     <!-- 자동 반주 패널 (단순 구성: 진행 → 재생 → 설정/저장은 접기) -->
                     <div class="accomp-panel">
 
@@ -1218,6 +1262,15 @@
                                         <option value="waltz">+ 왈츠</option>
                                         <option value="musical">+ 뮤지컬</option>
                                     </select>
+                                    <select id="styleSelect3" class="accomp-select">
+                                        <option value="">섞기 없음</option>
+                                        <option value="basic">+ 기본</option>
+                                        <option value="arpeggio">+ 아르페지오</option>
+                                        <option value="ballad">+ 발라드</option>
+                                        <option value="pop8">+ 8비트</option>
+                                        <option value="waltz">+ 왈츠</option>
+                                        <option value="musical">+ 뮤지컬</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="set-row">
@@ -1241,6 +1294,12 @@
                                 <div class="accomp-toggles">
                                     <button class="toggle-btn active" id="countInToggle"><span class="material-icons-round">timer</span> 카운트인</button>
                                     <button class="toggle-btn" id="loopToggle"><span class="material-icons-round">repeat</span> 반복</button>
+                                </div>
+                            </div>
+                            <div class="set-row">
+                                <span class="set-label">페달</span>
+                                <div class="accomp-toggles">
+                                    <button class="sustain-btn" id="sustainBtn"><span class="material-icons-round">all_inclusive</span> 서스테인 페달 (꺼짐)</button>
                                 </div>
                             </div>
                         </div>
@@ -1331,6 +1390,25 @@
                     <button class="vocal-play-btn" id="vocalPlayBtn"><span class="material-icons-round">play_arrow</span> 연주 시작</button>
                 </div>
                 <div class="vocal-guide" id="vocalGuide"><!-- JS로 렌더링 --></div>
+            </div>
+
+            <!-- 코드 모드: 이전·현재·다음 코드 현황 (피아노 위) -->
+            <div class="chord-status-bar" id="chordStatusBar" hidden>
+                <div class="cs-item cs-prev">
+                    <div class="cs-label">이전</div>
+                    <div class="cs-chord" id="csPrev">—</div>
+                </div>
+                <div class="cs-sep">›</div>
+                <div class="cs-item cs-cur">
+                    <div class="cs-label">현재</div>
+                    <div class="cs-chord" id="csCur">코드를 눌러보세요</div>
+                    <div class="cs-notes" id="csCurNotes"></div>
+                </div>
+                <div class="cs-sep">›</div>
+                <div class="cs-item cs-next">
+                    <div class="cs-label">다음</div>
+                    <div class="cs-chord" id="csNext">—</div>
+                </div>
             </div>
 
             <!-- 공용 피아노 -->
@@ -1596,9 +1674,18 @@
             // 발성 모드 초기화 (가이드/묶음 준비)
             if (mode === 'vocal') resetVocal();
 
-            // 코드 모드 진입 시 코드 표시 + 진행 목록 초기화 (편집 모드 해제)
+            // 코드 모드 진입 시 코드 현황 바 표시 + 진행 목록 초기화 (편집 모드 해제)
+            const chordStatusBar = document.getElementById('chordStatusBar');
+            chordStatusBar.hidden = (mode !== 'chord');
             if (mode === 'chord') {
-                chordDisplay.innerHTML = '<div class="cd-empty">코드 버튼을 눌러보세요 🎶</div>';
+                const curEl = document.getElementById('csCur');
+                const notEl = document.getElementById('csCurNotes');
+                const prevEl = document.getElementById('csPrev');
+                const nextEl = document.getElementById('csNext');
+                if (curEl)  curEl.textContent  = '코드를 눌러보세요';
+                if (notEl)  notEl.textContent  = '';
+                if (prevEl) prevEl.textContent = '—';
+                if (nextEl) nextEl.textContent = '—';
                 if (editMode) toggleEdit(false); else renderProgression();
                 applyWideChordDefaults();
             }
@@ -1730,8 +1817,11 @@
             { name: 'maj7',  label: '메이저7',  suffix: 'M7',   iv: [0,4,7,11],  cls: 'ct-maj7' },
             { name: 'minor', label: '마이너',   suffix: 'm',    iv: [0,3,7],     cls: 'ct-minor' },
             { name: 'min7',  label: '마이너7',  suffix: 'm7',   iv: [0,3,7,10],  cls: 'ct-min7' },
-            { name: 'dim',   label: '디미니시', suffix: 'dim',  iv: [0,3,6],     cls: 'ct-dim' },
-            { name: 'sus4',  label: '서스포(sus4)', suffix: 'sus4', iv: [0,5,7], cls: 'ct-sus4' },
+            { name: 'dim',   label: '디미니시',    suffix: 'dim',  iv: [0,3,6],     cls: 'ct-dim' },
+            { name: 'sus4',  label: '서스포(sus4)', suffix: 'sus4', iv: [0,5,7],    cls: 'ct-sus4' },
+            { name: 'add9',  label: 'add9',        suffix: 'add9', iv: [0,4,7,14],  cls: 'ct-add9' },
+            { name: 'sus2',  label: '서스투(sus2)', suffix: 'sus2', iv: [0,2,7],     cls: 'ct-sus2' },
+            { name: 'maj6',  label: '식스(6)',      suffix: '6',    iv: [0,4,7,9],   cls: 'ct-maj6' },
         ];
 
         const SUSTAIN_MS = 3500; // 서스테인 페달 유지 시간
@@ -1751,11 +1841,20 @@
         const KOR_NOTE = { 'C':'도','C#':'도#','D':'레','D#':'레#','E':'미','F':'파','F#':'파#','G':'솔','G#':'솔#','A':'라','A#':'라#','B':'시' };
         function korNote(note) { return KOR_NOTE[note.replace(/\d/,'')] || note; }
 
-        const chordDisplay = document.getElementById('chordDisplay');
-        function updateChordDisplay(label, notes) {
-            chordDisplay.innerHTML =
-                `<div class="cd-name">${label}</div>` +
-                `<div class="cd-notes">${notes.map(korNote).join(' · ')}</div>`;
+        function updateChordDisplay(label, notes, cellIdx = null) {
+            const curEl  = document.getElementById('csCur');
+            const notEl  = document.getElementById('csCurNotes');
+            const prevEl = document.getElementById('csPrev');
+            const nextEl = document.getElementById('csNext');
+            if (curEl)  curEl.textContent  = label || '—';
+            if (notEl)  notEl.textContent  = notes && notes.length ? notes.map(korNote).join(' · ') : '';
+            if (cellIdx !== null && progression.length > 0) {
+                if (prevEl) prevEl.textContent = cellIdx > 0 ? progression[cellIdx - 1].label : '—';
+                if (nextEl) nextEl.textContent = cellIdx < progression.length - 1 ? progression[cellIdx + 1].label : '—';
+            } else {
+                if (prevEl) prevEl.textContent = '—';
+                if (nextEl) nextEl.textContent = '—';
+            }
         }
 
         function playChord(notes, label) {
@@ -1891,6 +1990,7 @@
         let progression = [];          // [{ label, notes:[...], root, beats }]  (cell = 코드 한 칸)
         let accStyle = 'basic';
         let accStyle2 = '';            // 섞을 두 번째 스타일 ('' 이면 없음)
+        let accStyle3 = '';            // 섞을 세 번째 스타일 ('' 이면 없음)
         let accBpm = 90;
         let accMeter = '4/4';
         let nextCellBeats = 4;         // 다음에 추가할 코드 길이(박)
@@ -2214,7 +2314,7 @@
             }
             const mb = beatsPerMeasure();
             const pulse = pulseDurSec();
-            const styles = [accStyle, accStyle2];
+            const styles = [accStyle, accStyle2, accStyle3].filter(Boolean);
             const measure = measuresCache[autoIndex];
             let off = 0;
             measure.forEach(cell => {
@@ -2223,7 +2323,7 @@
                 playChordByStyle(cell, styles, { beats: cellBeats > 0 ? cellBeats : cell.beats, pulse, startMs });
                 const ci = cell.idx;
                 const did = setTimeout(() => {
-                    updateChordDisplay(cell.label, cell.notes);
+                    updateChordDisplay(cell.label, cell.notes, ci);
                     highlightCurrent(ci);
                 }, startMs);
                 autoTimers.push(did);
@@ -2240,7 +2340,7 @@
             for (let i = 0; i < beats; i++) {
                 const id = setTimeout(() => {
                     metroClick(accMeter === '6/8' ? (i % 3 === 0) : (i === 0));
-                    chordDisplay.innerHTML = `<div class="cd-name">${i + 1}</div><div class="cd-notes">카운트인 (${accMeter})</div>`;
+                    updateChordDisplay(`${i + 1}`, [], null);
                 }, i * pulse * 1000);
                 autoTimers.push(id);
             }
@@ -2305,6 +2405,45 @@
             ctx.arcTo(x, y, x + w, y, r);
             ctx.closePath();
         }
+        function drawChordStatusFrame(ctx, width, height) {
+            const bg      = cssVar('--card-bg');
+            const heading = cssVar('--heading');
+            const muted   = cssVar('--muted');
+            const text    = cssVar('--text-color');
+            const prevLabel = document.getElementById('csPrev')?.textContent || '—';
+            const curLabel  = document.getElementById('csCur')?.textContent  || '—';
+            const curNotes  = document.getElementById('csCurNotes')?.textContent || '';
+            const nextLabel = document.getElementById('csNext')?.textContent || '—';
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, width, height);
+            const col = width / 3;
+            ctx.textAlign = 'center';
+            // labels
+            ctx.fillStyle = muted; ctx.font = "11px 'Pretendard GOV',sans-serif";
+            ctx.fillText('이전', col * 0.5, 16);
+            ctx.fillText('현재', col * 1.5, 16);
+            ctx.fillText('다음', col * 2.5, 16);
+            // prev
+            ctx.globalAlpha = 0.38; ctx.fillStyle = text;
+            ctx.font = "bold 18px 'Black Han Sans',sans-serif";
+            ctx.fillText(prevLabel, col * 0.5, height * 0.62);
+            // next
+            ctx.fillText(nextLabel, col * 2.5, height * 0.62);
+            ctx.globalAlpha = 1;
+            // current (big)
+            ctx.fillStyle = heading;
+            ctx.font = "bold 30px 'Black Han Sans',sans-serif";
+            ctx.fillText(curLabel, col * 1.5, height * 0.6);
+            // notes
+            ctx.fillStyle = muted; ctx.font = "11px 'Pretendard GOV',sans-serif";
+            ctx.fillText(curNotes, col * 1.5, height * 0.6 + 16);
+            // arrows
+            ctx.globalAlpha = 0.28; ctx.fillStyle = muted;
+            ctx.font = "20px sans-serif";
+            ctx.fillText('›', col,       height * 0.55);
+            ctx.fillText('›', col * 2,   height * 0.55);
+            ctx.globalAlpha = 1; ctx.textAlign = 'left';
+        }
         function drawPianoFrame(ctx, wrapRect) {
             ctx.fillStyle = cssVar('--inset-bg');
             ctx.fillRect(0, 0, wrapRect.width, wrapRect.height);
@@ -2356,14 +2495,19 @@
             if (Tone.context.state !== 'running') { try { await Tone.start(); } catch (e) {} }
             const rect = wrap.getBoundingClientRect();
             const scale = 2;
+            const STATUS_H = 72; // 코드 현황 바 높이 (논리 픽셀)
             videoCanvas = document.createElement('canvas');
             videoCanvas.width = Math.round(rect.width * scale);
-            videoCanvas.height = Math.round(rect.height * scale);
+            videoCanvas.height = Math.round((rect.height + STATUS_H) * scale);
             const ctx = videoCanvas.getContext('2d');
             const render = () => {
                 const wr = wrap.getBoundingClientRect();
                 ctx.setTransform(scale, 0, 0, scale, 0, 0);
+                drawChordStatusFrame(ctx, wr.width, STATUS_H);
+                ctx.save();
+                ctx.translate(0, STATUS_H);
                 drawPianoFrame(ctx, wr);
+                ctx.restore();
                 videoRafId = requestAnimationFrame(render);
             };
             render();
@@ -2474,7 +2618,7 @@
             triggerDownload(URL.createObjectURL(blob), '코드진행.txt');
         }
         function sharePayload() {
-            return { v: 1, m: accMeter, b: accBpm, s: accStyle, x: accStyle2, c: countInOn ? 1 : 0, l: loopOn ? 1 : 0, p: progression.map(cell => [cell.label, cell.beats, cell.lyric || '']) };
+            return { v: 1, m: accMeter, b: accBpm, s: accStyle, x: accStyle2, x3: accStyle3, c: countInOn ? 1 : 0, l: loopOn ? 1 : 0, p: progression.map(cell => [cell.label, cell.beats, cell.lyric || '']) };
         }
         function encodeShare(obj) {
             const json = JSON.stringify(obj);
@@ -2503,13 +2647,14 @@
         function applyStateObject(data) {
             if (!data || !Array.isArray(data.p)) return false;
             accMeter = data.m || accMeter; setBpm(data.b || accBpm);
-            accStyle = data.s || accStyle; accStyle2 = data.x || ''; countInOn = data.c !== 0; loopOn = !!data.l;
+            accStyle = data.s || accStyle; accStyle2 = data.x || ''; accStyle3 = data.x3 || ''; countInOn = data.c !== 0; loopOn = !!data.l;
             progression = data.p.map((entry) => {
                 const [label, beats, lyric] = Array.isArray(entry) ? entry : [entry, beatsPerMeasure(), ''];
                 return { ...chordFromLabel(label), beats: Math.max(1, Math.min(parseInt(beats, 10) || beatsPerMeasure(), beatsPerMeasure())), lyric: lyric || '' };
             });
             const styleSelect = document.getElementById('styleSelect'); if (styleSelect) styleSelect.value = accStyle;
             const styleSelect2 = document.getElementById('styleSelect2'); if (styleSelect2) styleSelect2.value = accStyle2;
+            const styleSelect3 = document.getElementById('styleSelect3'); if (styleSelect3) styleSelect3.value = accStyle3;
             document.querySelectorAll('#meterSelector .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.meter === accMeter));
             const countInToggle = document.getElementById('countInToggle'); if (countInToggle) countInToggle.classList.toggle('active', countInOn);
             const loopToggle = document.getElementById('loopToggle'); if (loopToggle) loopToggle.classList.toggle('active', loopOn);
@@ -2582,6 +2727,7 @@
         (function wireAccompaniment() {
             const styleSelect   = document.getElementById('styleSelect');
             const styleSelect2  = document.getElementById('styleSelect2');
+            const styleSelect3  = document.getElementById('styleSelect3');
             const bpmSlider     = document.getElementById('bpmSlider');
             const bpmInput      = document.getElementById('bpmInput');
             const meterSelector = document.getElementById('meterSelector');
@@ -2591,6 +2737,7 @@
 
             if (styleSelect)  styleSelect.addEventListener('change', () => { accStyle = styleSelect.value; });
             if (styleSelect2) styleSelect2.addEventListener('change', () => { accStyle2 = styleSelect2.value; });
+            if (styleSelect3) styleSelect3.addEventListener('change', () => { accStyle3 = styleSelect3.value; });
             if (bpmSlider) bpmSlider.addEventListener('input', () => setBpm(bpmSlider.value));
             if (bpmInput) {
                 bpmInput.addEventListener('change', () => setBpm(bpmInput.value));
