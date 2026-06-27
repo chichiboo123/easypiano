@@ -29,7 +29,7 @@
             --pastel-orange: #FFDAC1;
             --key-white: #FFFFFF;
             --key-black: #333333;
-            --text-color: var(--text-color);
+            --text-color: #334155;
             --card-bg: #FFFFFF;
             --inset-bg: #E2E8F0;
             --chip-bg: #F1F5F9;
@@ -330,6 +330,14 @@
             max-width: 800px;
             margin: 0 auto 14px;
         }
+        .chord-tools, .chord-list { min-width: 0; }
+        .chord-list {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 14px;
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
         .sustain-row {
             display: flex;
             justify-content: center;
@@ -363,9 +371,11 @@
             margin-bottom: 6px;
             padding-left: 4px;
         }
+        .accidental-row { display: flex; justify-content: center; margin: 0 0 10px; }
+        .accidental-row .seg { width: min(360px, 100%); }
         .chord-buttons {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
             gap: 6px;
         }
         .chord-btn {
@@ -399,7 +409,7 @@
 
         /* ============ 코드 모드: 자동 반주 패널 ============ */
         .accomp-panel {
-            width: 95vw;
+            width: 100%;
             max-width: 520px;
             margin: 0 auto 14px;
             background: var(--card-bg);
@@ -484,8 +494,8 @@
             align-items: center; justify-content: center;
             min-width: 52px;
             padding: 8px 12px;
-            background: var(--pastel-blue);
-            color: #1E293B;
+            background: #D7EEF5;
+            color: #102033;
             border-radius: 12px;
             box-shadow: 0 3px 0 rgba(0,0,0,0.12);
             cursor: grab;
@@ -495,7 +505,11 @@
         }
         .chord-block:active { cursor: grabbing; }
         .chord-block.dragging { opacity: 0.5; box-shadow: 0 6px 12px rgba(0,0,0,0.25); }
-        .chord-block.current { background: var(--pastel-green); transform: scale(1.06); }
+        .chord-block.current { background: #CFF7E6; transform: scale(1.06); }
+        body.dark .chord-block { background: #4F8EA0; color: #F8FAFC; box-shadow: 0 3px 0 rgba(0,0,0,0.28); }
+        body.dark .chord-block.current { background: #2F9E73; color: #FFFFFF; }
+        body.dark .chord-block .cb-len { color: rgba(248,250,252,0.72); }
+        body.dark .chord-block.measure-start::before { background: #CBD5E1; }
         .chord-block .cb-name { font-size: 1rem; font-weight: 800; line-height: 1.1; }
         .chord-block .cb-len { font-size: 0.66rem; font-weight: bold; color: rgba(30,41,59,0.55); margin-top: 1px; }
         /* 마디 시작 블록 앞 마디줄 */
@@ -518,7 +532,8 @@
         }
         .chord-block .cell-del .material-icons-round { font-size: 15px; }
         .prog-chart.editing .chord-block { animation: wiggle 0.4s ease-in-out infinite alternate; }
-        .prog-chart.editing .cell-del { display: flex; }
+        .prog-chart.editing .cell-del, .chord-block.show-delete .cell-del { display: flex; }
+        .prog-actions .icon-btn:disabled { opacity: 0.38; cursor: default; transform: none; }
         @keyframes wiggle { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
 
         /* 코드 길이 (세그먼트) */
@@ -574,13 +589,48 @@
         .set-row:last-child { margin-bottom: 0; }
         .set-label { font-weight: bold; color: var(--text-color); font-size: 0.9rem; text-align: right; white-space: nowrap; }
 
+        .prog-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .icon-btn { min-width: 42px; width: 42px; height: 38px; padding: 0; justify-content: center; border-radius: 14px; }
+        .icon-btn .btn-text { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .save-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-        .save-grid .control-btn { padding: 9px 13px; font-size: 0.88rem; }
+        .save-grid .control-btn { padding: 9px 11px; font-size: 0.88rem; min-width: 44px; }
+        .save-grid .material-icons-round { margin: 0; }
+        .save-grid .btn-text { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        @media (max-width: 560px) {
+            .chord-panel, .accomp-panel, .topbar { width: calc(100vw - 16px); }
+            .accomp-panel { padding: 12px 10px; border-radius: 16px; }
+            .prog-head { align-items: flex-start; gap: 8px; }
+            .prog-title { font-size: 0.92rem; padding-top: 8px; }
+            .len-row, .set-row { grid-template-columns: 1fr; gap: 6px; }
+            .len-label, .set-label { text-align: left; }
+            .play-row { gap: 8px; }
+            .big-btn { padding: 13px 8px; font-size: 1rem; }
+            .style-mix { flex-direction: column; }
+            .prog-chart { padding: 10px 8px; gap: 7px; }
+            .chord-block { min-width: 48px; padding: 8px 10px; }
+        }
         .btn-acc-rec   { background: #FF6B6B; color: #fff; }
         .btn-acc-rec.recording { background: var(--key-black); color: #fff; }
         .btn-acc-clear { background: var(--inset-bg); color: var(--text-color); }
         .btn-acc-exp   { background: var(--pastel-purple); color: #1E293B; }
         .control-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+        @media (min-width: 1000px) and (min-aspect-ratio: 4/3) {
+            #appScreen.chord-layout { width: 100%; }
+            #appScreen.chord-layout .chord-panel {
+                width: min(96vw, 1280px);
+                max-width: 1280px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+                align-items: start;
+            }
+            #appScreen.chord-layout .chord-tools { order: 1; }
+            #appScreen.chord-layout .chord-list { order: 2; max-height: min(58vh, 620px); overflow: auto; }
+            #appScreen.chord-layout .accomp-panel { max-width: none; margin-bottom: 0; }
+            #appScreen.chord-layout .piano-wrapper { width: min(96vw, 1280px); max-width: 1280px; }
+            #appScreen.chord-layout .piano-container { height: clamp(170px, 24vh, 260px); }
+        }
 
         /* 기본 모드 메트로놈 */
         .metro-row {
@@ -1075,22 +1125,28 @@
 
             <!-- 코드 모드: 코드 버튼 + 서스테인 페달 -->
             <div class="chord-panel" id="chordControls" hidden>
-                <div class="chord-display" id="chordDisplay">
-                    <div class="cd-empty">코드 버튼을 눌러보세요 🎶</div>
-                </div>
-                <div class="sustain-row">
-                    <button class="sustain-btn" id="sustainBtn">
-                        <span class="material-icons-round">all_inclusive</span> 서스테인 페달 (꺼짐)
-                    </button>
-                </div>
+                <div class="chord-tools">
+                    <div class="chord-display" id="chordDisplay">
+                        <div class="cd-empty">코드 버튼을 눌러보세요 🎶</div>
+                    </div>
+                    <div class="sustain-row">
+                        <button class="sustain-btn" id="sustainBtn">
+                            <span class="material-icons-round">all_inclusive</span> 서스테인 페달 (꺼짐)
+                        </button>
+                    </div>
 
-                <!-- 자동 반주 패널 (단순 구성: 진행 → 재생 → 설정/저장은 접기) -->
-                <div class="accomp-panel">
+                    <!-- 자동 반주 패널 (단순 구성: 진행 → 재생 → 설정/저장은 접기) -->
+                    <div class="accomp-panel">
 
                     <!-- 1) 코드 진행 (블록) -->
                     <div class="prog-head">
                         <span class="prog-title"><span class="material-icons-round">queue_music</span> 코드 진행</span>
-                        <button class="toggle-btn" id="progEditBtn"><span class="material-icons-round">edit</span> 편집</button>
+                        <div class="prog-actions">
+                            <button class="toggle-btn icon-btn" id="progUndoBtn" title="실행 취소" aria-label="실행 취소"><span class="material-icons-round">undo</span><span class="btn-text">실행 취소</span></button>
+                            <button class="toggle-btn icon-btn" id="progRedoBtn" title="다시 실행" aria-label="다시 실행"><span class="material-icons-round">redo</span><span class="btn-text">다시 실행</span></button>
+                            <button class="toggle-btn icon-btn" id="progEditBtn" title="편집" aria-label="편집"><span class="material-icons-round">edit</span><span class="btn-text">편집</span></button>
+                            <button class="control-btn btn-acc-clear icon-btn" id="accClearBtn" title="전체 비우기" aria-label="전체 비우기"><span class="material-icons-round">delete_sweep</span><span class="btn-text">전체 비우기</span></button>
+                        </div>
                     </div>
                     <div class="prog-chart" id="progDisplay"></div>
 
@@ -1163,18 +1219,26 @@
                         <summary><span class="material-icons-round">save</span> 저장 · 공유</summary>
                         <div class="acc-body">
                             <div class="save-grid">
-                                <button class="control-btn btn-acc-rec" id="accRecBtn"><span class="material-icons-round">fiber_manual_record</span> 반주 녹음</button>
-                                <button class="control-btn btn-acc-exp" id="accImgBtn"><span class="material-icons-round">image</span> 이미지</button>
-                                <button class="control-btn btn-acc-exp" id="accTxtBtn"><span class="material-icons-round">description</span> 텍스트</button>
-                                <button class="control-btn btn-acc-exp" id="accCopyBtn"><span class="material-icons-round">content_copy</span> 복사</button>
-                                <button class="control-btn btn-acc-clear" id="accClearBtn"><span class="material-icons-round">delete_sweep</span> 전체 비우기</button>
+                                <button class="control-btn btn-acc-rec icon-btn" id="accRecBtn" title="반주 녹음" aria-label="반주 녹음"><span class="material-icons-round">fiber_manual_record</span><span class="btn-text">반주 녹음</span></button>
+                                <button class="control-btn btn-acc-exp icon-btn" id="accImgBtn" title="이미지 저장" aria-label="이미지 저장"><span class="material-icons-round">image</span><span class="btn-text">이미지</span></button>
+                                <button class="control-btn btn-acc-exp icon-btn" id="accTxtBtn" title="텍스트 저장" aria-label="텍스트 저장"><span class="material-icons-round">description</span><span class="btn-text">텍스트</span></button>
+                                <button class="control-btn btn-acc-exp icon-btn" id="accCopyBtn" title="복사" aria-label="복사"><span class="material-icons-round">content_copy</span><span class="btn-text">복사</span></button>
+                                <button class="control-btn btn-acc-exp icon-btn" id="accShareBtn" title="링크 공유" aria-label="링크 공유"><span class="material-icons-round">ios_share</span><span class="btn-text">링크 공유</span></button>
                             </div>
                             <div id="accRecStatus" class="record-status"></div>
                         </div>
                     </details>
+                    </div>
                 </div>
 
-                <div id="chordGroups"><!-- JS로 렌더링 --></div>
+                <div class="chord-list">
+                    <div class="accidental-row"><div class="seg" id="accidentalSeg">
+                    <button class="seg-btn active" data-accidental="natural">내추럴</button>
+                    <button class="seg-btn" data-accidental="sharp"># 샵</button>
+                    <button class="seg-btn" data-accidental="flat">♭ 플랫</button>
+                </div></div>
+                    <div id="chordGroups"><!-- JS로 렌더링 --></div>
+                </div>
             </div>
 
             <!-- 발성 모드: 방향/음개수/시작음/속도/재생 컨트롤 -->
@@ -1339,6 +1403,20 @@
         const recordsPanel = document.getElementById('recordsPanel');
 
         let currentMode = 'basic';
+        function hasSharedChordLink() { return /[#&]s=([^&]+)/.test(location.hash); }
+        function openSharedChordModeWhenReady() {
+            if (!hasSharedChordLink() || typeof enterMode !== 'function') return false;
+            setupRecorder();
+            startScreen.hidden = true;
+            modeScreen.hidden = true;
+            enterMode('chord');
+            return true;
+        }
+        function ensureToneStarted() {
+            if (typeof Tone !== 'undefined' && Tone.context && Tone.context.state !== 'running') {
+                Tone.start().catch(() => {});
+            }
+        }
 
         /* ===================================================================
          * 오디오 시작 게이트
@@ -1354,7 +1432,13 @@
             audioReady = true;
             spinner.style.display = "none";
             statusText.innerHTML = usingFallback ? "준비 완료! 🎹 (기본 음색)" : "피아노 준비 완료! 🎹";
-            startBtn.style.display = "block";
+            if (hasSharedChordLink()) {
+                startBtn.textContent = '공유 코드 열기';
+                startBtn.style.display = "block";
+                setTimeout(openSharedChordModeWhenReady, 0);
+            } else {
+                startBtn.style.display = "block";
+            }
         }
 
         // 1) 샘플 로딩 성공 → Sampler 사용
@@ -1375,30 +1459,36 @@
             }
         }, 8000);
 
+        function setupRecorder() {
+            if (recorder || typeof MediaRecorder === 'undefined') return;
+            // MediaRecorder 초기화 (WebM 형식 선호, 안되면 브라우저 기본 포맷)
+            const options = { mimeType: 'audio/webm' };
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                options.mimeType = 'audio/webm;codecs=opus';
+            }
+            try {
+                recorder = new MediaRecorder(dest.stream, options);
+            } catch (e) {
+                console.warn('WebM not supported, falling back to default MIME type.');
+                recorder = new MediaRecorder(dest.stream);
+            }
+
+            recorder.ondataavailable = e => {
+                if (e.data && e.data.size > 0) audioChunks.push(e.data);
+            };
+            recorder.onstop = handleRecorderStop;
+        }
+
         {
             startBtn.addEventListener('click', async () => {
                 await Tone.start();
+                setupRecorder();
 
-                // MediaRecorder 초기화 (WebM 형식 선호, 안되면 브라우저 기본 포맷)
-                const options = { mimeType: 'audio/webm' };
-                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                    options.mimeType = 'audio/webm;codecs=opus';
+                // 시작 화면 → 모드 선택 화면 (공유 링크는 바로 코드 모드)
+                if (!openSharedChordModeWhenReady()) {
+                    startScreen.hidden = true;
+                    modeScreen.hidden = false;
                 }
-                try {
-                    recorder = new MediaRecorder(dest.stream, options);
-                } catch (e) {
-                    console.warn('WebM not supported, falling back to default MIME type.');
-                    recorder = new MediaRecorder(dest.stream);
-                }
-
-                recorder.ondataavailable = e => {
-                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
-                };
-                recorder.onstop = handleRecorderStop;
-
-                // 시작 화면 → 모드 선택 화면
-                startScreen.hidden = true;
-                modeScreen.hidden = false;
             });
         }
 
@@ -1424,6 +1514,7 @@
 
         function enterMode(mode) {
             currentMode = mode;
+            appScreen.classList.toggle('chord-layout', mode === 'chord');
 
             // 진행 중인 발성/자동 반주/메트로놈/소리 정리
             stopVocal();
@@ -1476,6 +1567,7 @@
                 resetUIAfterRecord();
             }
             appScreen.hidden = true;
+            appScreen.classList.remove('chord-layout');
             modeScreen.hidden = false;
             backBtn.hidden = true;
         });
@@ -1497,6 +1589,7 @@
         const pendingRelease = {}; // 서스테인 중 예약된 release 타이머
 
         function triggerNoteOn(key) {
+            ensureToneStarted();
             const note = key.getAttribute('data-note');
             if (!note) return;
             // 서스테인(또는 코드)으로 울리고 있던 음이면 예약된 release/하이라이트 해제
@@ -1566,7 +1659,13 @@
          * 코드 모드
          * =================================================================== */
         const CHROMA = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-        const CHORD_ROOTS = ['C','D','E','F','G','A','B'];
+        const ENHARMONIC = { 'Db':'C#', 'Eb':'D#', 'Gb':'F#', 'Ab':'G#', 'Bb':'A#' };
+        const ROOT_SETS = {
+            natural: ['C','D','E','F','G','A','B'],
+            sharp: ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
+            flat: ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B']
+        };
+        let chordAccidentalMode = 'natural';
         const CHORD_TYPES = [
             { name: 'major', label: '메이저',   suffix: '',     iv: [0,4,7],     cls: 'ct-major' },
             { name: 'minor', label: '마이너',   suffix: 'm',    iv: [0,3,7],     cls: 'ct-minor' },
@@ -1580,7 +1679,7 @@
         const SUSTAIN_MS = 3500; // 서스테인 페달 유지 시간
 
         function chordNotes(root, intervals, baseOct = 4) {
-            const rootIdx = CHROMA.indexOf(root);
+            const rootIdx = CHROMA.indexOf(ENHARMONIC[root] || root);
             return intervals.map(iv => {
                 const total = rootIdx + iv;
                 return CHROMA[total % 12] + (baseOct + Math.floor(total / 12));
@@ -1602,6 +1701,7 @@
         }
 
         function playChord(notes, label) {
+            ensureToneStarted();
             const dur = sustainOn ? SUSTAIN_MS / 1000 : 1.2;
             instrument.triggerAttackRelease(notes, dur);
             if (label) updateChordDisplay(label, notes);
@@ -1631,7 +1731,7 @@
 
                 const btnRow = document.createElement('div');
                 btnRow.className = 'chord-buttons';
-                CHORD_ROOTS.forEach(root => {
+                ROOT_SETS[chordAccidentalMode].forEach(root => {
                     const notes = chordNotes(root, type.iv);
                     const btn = document.createElement('button');
                     btn.className = 'chord-btn ' + type.cls;
@@ -1649,6 +1749,19 @@
                 container.appendChild(group);
             });
         }
+        function chordFromLabel(label) {
+            const type = [...CHORD_TYPES].sort((a, b) => b.suffix.length - a.suffix.length).find(t => t.suffix && label.endsWith(t.suffix)) || CHORD_TYPES[0];
+            const root = type.suffix ? label.slice(0, -type.suffix.length) : label;
+            return { label, root, notes: chordNotes(root, type.iv) };
+        }
+        document.querySelectorAll('#accidentalSeg .seg-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                chordAccidentalMode = btn.dataset.accidental;
+                document.querySelectorAll('#accidentalSeg .seg-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                buildChordButtons();
+            });
+        });
         buildChordButtons();
 
         /* ===================================================================
@@ -1660,7 +1773,7 @@
         // 코드에서 베이스/펼침음 등 반주에 쓸 음들을 뽑아내는 헬퍼
         function chordParts(chord) {
             const triad = chord.notes;          // 트라이어드/7th (oct4 기준)
-            const root = chord.root;            // 'C' ~ 'B'
+            const root = ENHARMONIC[chord.root] || chord.root; // 반주용 베이스는 샘플 호환을 위해 샵 표기로 정규화
             return { triad, root, bass: root + '3', bassLow: root + '2', rootHigh: root + '5' };
         }
 
@@ -1729,16 +1842,55 @@
         let metroSynth = null;
         let accRecording = false;
         let dragState = null;          // 코드 블록 드래그 정렬 상태
+        let progressionHistory = [[]];
+        let historyIndex = 0;
+        const LONG_PRESS_MS = 520;
 
         const progDisplay = document.getElementById('progDisplay');
         const accPlayBtn  = document.getElementById('accPlayBtn');
         const accStopBtn  = document.getElementById('accStopBtn');
         const accRecBtn   = document.getElementById('accRecBtn');
         const accClearBtn = document.getElementById('accClearBtn');
+        const progUndoBtn = document.getElementById('progUndoBtn');
+        const progRedoBtn = document.getElementById('progRedoBtn');
 
         // 박자별 한 마디 박 수 / 한 박(펄스) 길이
         function beatsPerMeasure() { return accMeter === '3/4' ? 3 : accMeter === '6/8' ? 6 : 4; }
         function pulseDurSec() { return accMeter === '6/8' ? (60 / accBpm) / 3 : (60 / accBpm); }
+
+        function cloneProgressionState() {
+            return progression.map(cell => ({ label: cell.label, notes: [...cell.notes], root: cell.root, beats: cell.beats }));
+        }
+        function restoreProgressionState(state) {
+            progression = state.map(cell => ({ label: cell.label, notes: [...cell.notes], root: cell.root, beats: cell.beats }));
+            renderProgression();
+            updateHistoryButtons();
+        }
+        function resetHistory() {
+            progressionHistory = [cloneProgressionState()];
+            historyIndex = 0;
+            updateHistoryButtons();
+        }
+        function recordHistory() {
+            progressionHistory = progressionHistory.slice(0, historyIndex + 1);
+            progressionHistory.push(cloneProgressionState());
+            historyIndex = progressionHistory.length - 1;
+            updateHistoryButtons();
+        }
+        function undoProgression() {
+            if (historyIndex <= 0) return;
+            historyIndex -= 1;
+            restoreProgressionState(progressionHistory[historyIndex]);
+        }
+        function redoProgression() {
+            if (historyIndex >= progressionHistory.length - 1) return;
+            historyIndex += 1;
+            restoreProgressionState(progressionHistory[historyIndex]);
+        }
+        function updateHistoryButtons() {
+            if (progUndoBtn) progUndoBtn.disabled = historyIndex <= 0;
+            if (progRedoBtn) progRedoBtn.disabled = historyIndex >= progressionHistory.length - 1;
+        }
 
         // 코드 길이 선택 옵션 (박자에 따라 달라짐)
         function lengthOptions() {
@@ -1770,6 +1922,7 @@
             const beats = Math.min(nextCellBeats || beatsPerMeasure(), beatsPerMeasure());
             progression.push({ label, notes: [...notes], root, beats });
             renderProgression();
+            recordHistory();
         }
 
         // 셀 목록을 마디 단위로 묶기 (박 누적이 한 마디를 채우면 다음 마디)
@@ -1837,6 +1990,7 @@
                     e.stopPropagation();
                     progression.splice(parseInt(block.dataset.i, 10), 1);
                     renderProgression();
+                    recordHistory();
                 });
                 block.addEventListener('pointerdown', onBlockPointerDown);
             });
@@ -1851,7 +2005,9 @@
             const btn = document.getElementById('progEditBtn');
             if (btn) {
                 btn.classList.toggle('active', editMode);
-                btn.innerHTML = `<span class="material-icons-round">${editMode ? 'check' : 'edit'}</span> ${editMode ? '완료' : '편집'}`;
+                btn.title = editMode ? '완료' : '편집';
+                btn.setAttribute('aria-label', editMode ? '완료' : '편집');
+                btn.innerHTML = `<span class="material-icons-round">${editMode ? 'check' : 'edit'}</span><span class="btn-text">${editMode ? '완료' : '편집'}</span>`;
             }
             if (progDisplay) progDisplay.classList.toggle('editing', editMode);
         }
@@ -1861,11 +2017,17 @@
             if (e.target.closest('.cell-del')) return;      // 삭제 버튼은 드래그 제외
             if (autoPlaying) return;                        // 재생 중에는 정렬 잠금
             const block = e.currentTarget;
-            dragState = { block, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false };
+            clearTimeout(block._hideDeleteTimer);
+            dragState = { block, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, longPressed: false };
+            dragState.longPressTimer = setTimeout(() => {
+                if (!dragState || dragState.block !== block || dragState.moved) return;
+                dragState.longPressed = true;
+                block.classList.add('show-delete');
+            }, LONG_PRESS_MS);
             try { block.setPointerCapture(e.pointerId); } catch (err) {}
-            block.addEventListener('pointermove', onBlockPointerMove);
-            block.addEventListener('pointerup', onBlockPointerUp);
-            block.addEventListener('pointercancel', onBlockPointerUp);
+            document.addEventListener('pointermove', onBlockPointerMove);
+            document.addEventListener('pointerup', onBlockPointerUp);
+            document.addEventListener('pointercancel', onBlockPointerUp);
         }
         function onBlockPointerMove(e) {
             if (!dragState) return;
@@ -1873,6 +2035,7 @@
             if (!dragState.moved && Math.hypot(dx, dy) < 6) return;
             if (!dragState.moved) {
                 dragState.moved = true;
+                clearTimeout(dragState.longPressTimer);
                 dragState.block.classList.add('dragging');
                 dragState.block.style.pointerEvents = 'none';   // 아래 요소를 hit-test 하도록
             }
@@ -1880,25 +2043,32 @@
             const target = under && under.closest('.chord-block');
             if (target && target !== dragState.block && target.parentElement === progDisplay) {
                 const rect = target.getBoundingClientRect();
-                const before = e.clientY < rect.top + rect.height / 2 ||
-                               (Math.abs(e.clientY - (rect.top + rect.height / 2)) < rect.height / 2 && e.clientX < rect.left + rect.width / 2);
+                const sameRow = e.clientY >= rect.top && e.clientY <= rect.bottom;
+                const before = sameRow ? e.clientX < rect.left + rect.width / 2 : e.clientY < rect.top + rect.height / 2;
                 progDisplay.insertBefore(dragState.block, before ? target : target.nextSibling);
             }
         }
         function onBlockPointerUp(e) {
             if (!dragState) return;
             const block = dragState.block;
+            clearTimeout(dragState.longPressTimer);
             block.classList.remove('dragging');
             block.style.pointerEvents = '';
-            block.removeEventListener('pointermove', onBlockPointerMove);
-            block.removeEventListener('pointerup', onBlockPointerUp);
-            block.removeEventListener('pointercancel', onBlockPointerUp);
+            document.removeEventListener('pointermove', onBlockPointerMove);
+            document.removeEventListener('pointerup', onBlockPointerUp);
+            document.removeEventListener('pointercancel', onBlockPointerUp);
             try { block.releasePointerCapture(dragState.pointerId); } catch (err) {}
             if (dragState.moved) {
                 // 현재 DOM 순서대로 progression 재구성
                 const order = [...progDisplay.querySelectorAll('.chord-block')].map(el => parseInt(el.dataset.i, 10));
                 progression = order.map(i => progression[i]);
                 renderProgression();
+                recordHistory();
+            }
+            if (!dragState.moved && dragState.longPressed) {
+                block._hideDeleteTimer = setTimeout(() => block.classList.remove('show-delete'), 3500);
+            } else if (!dragState.longPressed) {
+                block.classList.remove('show-delete');
             }
             dragState = null;
         }
@@ -2011,7 +2181,7 @@
                     recorder.start(100);
                     accRecording = true;
                     accRecBtn.classList.add('recording');
-                    accRecBtn.innerHTML = '<span class="material-icons-round">stop</span> 녹음 정지';
+                    accRecBtn.title = '녹음 정지'; accRecBtn.setAttribute('aria-label', '녹음 정지'); accRecBtn.innerHTML = '<span class="material-icons-round">stop</span><span class="btn-text">녹음 정지</span>';
                     if (statusEl) statusEl.innerText = '🔴 반주 녹음 중...';
                 } catch (e) { await showAlert('녹음을 시작할 수 없습니다.'); }
             } else {
@@ -2021,7 +2191,7 @@
                 }
                 accRecording = false;
                 accRecBtn.classList.remove('recording');
-                accRecBtn.innerHTML = '<span class="material-icons-round">fiber_manual_record</span> 반주 녹음';
+                accRecBtn.title = '반주 녹음'; accRecBtn.setAttribute('aria-label', '반주 녹음'); accRecBtn.innerHTML = '<span class="material-icons-round">fiber_manual_record</span><span class="btn-text">반주 녹음</span>';
                 setTimeout(() => { if (statusEl) statusEl.innerText = ''; }, 1200);
             }
         }
@@ -2089,6 +2259,49 @@
             const blob = new Blob([progressionToText()], { type: 'text/plain;charset=utf-8' });
             triggerDownload(URL.createObjectURL(blob), '코드진행.txt');
         }
+        function sharePayload() {
+            return { v: 1, m: accMeter, b: accBpm, s: accStyle, x: accStyle2, c: countInOn ? 1 : 0, l: loopOn ? 1 : 0, p: progression.map(cell => [cell.label, cell.beats]) };
+        }
+        function encodeShare(obj) {
+            const json = JSON.stringify(obj);
+            return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+        function decodeShare(str) {
+            const b64 = str.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(str.length / 4) * 4, '=');
+            return JSON.parse(decodeURIComponent(escape(atob(b64))));
+        }
+        async function shareChordLink() {
+            if (progression.length === 0) { await showAlert('먼저 코드 진행을 입력해 주세요.'); return; }
+            const url = new URL(location.href);
+            url.hash = 's=' + encodeShare(sharePayload());
+            const text = url.toString();
+            try { await navigator.clipboard.writeText(text); await showAlert('현재 코드 진행 링크를 복사했어요! 🔗'); return; }
+            catch (e) {}
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.focus(); ta.select();
+                document.execCommand('copy'); document.body.removeChild(ta);
+                await showAlert('현재 코드 진행 링크를 복사했어요! 🔗');
+            } catch (e2) { await showAlert('이 브라우저에서는 링크 복사를 지원하지 않습니다.'); }
+        }
+        function loadSharedProgression() {
+            const m = location.hash.match(/[#&]s=([^&]+)/);
+            if (!m) return;
+            try {
+                const data = decodeShare(m[1]);
+                if (!data || !Array.isArray(data.p)) return;
+                accMeter = data.m || accMeter; setBpm(data.b || accBpm);
+                accStyle = data.s || accStyle; accStyle2 = data.x || ''; countInOn = data.c !== 0; loopOn = !!data.l;
+                progression = data.p.map(([label, beats]) => ({ ...chordFromLabel(label), beats: Math.max(1, Math.min(parseInt(beats, 10) || beatsPerMeasure(), beatsPerMeasure())) }));
+                const styleSelect = document.getElementById('styleSelect'); if (styleSelect) styleSelect.value = accStyle;
+                const styleSelect2 = document.getElementById('styleSelect2'); if (styleSelect2) styleSelect2.value = accStyle2;
+                document.querySelectorAll('#meterSelector .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.meter === accMeter));
+                const countInToggle = document.getElementById('countInToggle'); if (countInToggle) countInToggle.classList.toggle('active', countInOn);
+                const loopToggle = document.getElementById('loopToggle'); if (loopToggle) loopToggle.classList.toggle('active', loopOn);
+            } catch (e) { console.warn('Invalid share link', e); }
+        }
+
         async function copyChordProgression() {
             if (progression.length === 0) { await showAlert('먼저 코드 진행을 입력해 주세요.'); return; }
             const text = progressionToText();
@@ -2141,6 +2354,7 @@
                     if (nextCellBeats === oldMb || nextCellBeats > newMb) nextCellBeats = newMb;
                     renderLengthSeg();
                     renderProgression();
+                    recordHistory();
                 });
             });
             if (countInToggle) countInToggle.addEventListener('click', () => {
@@ -2151,18 +2365,24 @@
                 loopOn = !loopOn;
                 loopToggle.classList.toggle('active', loopOn);
             });
+            if (progUndoBtn) progUndoBtn.addEventListener('click', undoProgression);
+            if (progRedoBtn) progRedoBtn.addEventListener('click', redoProgression);
             if (progEditBtn) progEditBtn.addEventListener('click', () => toggleEdit());
             if (accPlayBtn)  accPlayBtn.addEventListener('click', startAuto);
             if (accStopBtn)  accStopBtn.addEventListener('click', stopAuto);
             if (accRecBtn)   accRecBtn.addEventListener('click', toggleAccRecording);
-            if (accClearBtn) accClearBtn.addEventListener('click', () => { progression = []; editMode = false; toggleEdit(false); renderProgression(); });
+            if (accClearBtn) accClearBtn.addEventListener('click', () => { progression = []; editMode = false; toggleEdit(false); renderProgression(); recordHistory(); });
             const accImgBtn = document.getElementById('accImgBtn');
             const accTxtBtn = document.getElementById('accTxtBtn');
             const accCopyBtn = document.getElementById('accCopyBtn');
+            const accShareBtn = document.getElementById('accShareBtn');
             if (accImgBtn)  accImgBtn.addEventListener('click', downloadChordImage);
             if (accTxtBtn)  accTxtBtn.addEventListener('click', downloadChordText);
             if (accCopyBtn) accCopyBtn.addEventListener('click', copyChordProgression);
+            if (accShareBtn) accShareBtn.addEventListener('click', shareChordLink);
 
+            loadSharedProgression();
+            resetHistory();
             renderLengthSeg();
             renderProgression();
             updateAutoUI();
