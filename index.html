@@ -590,6 +590,20 @@
         .set-row:last-child { margin-bottom: 0; }
         .set-label { font-weight: bold; color: var(--text-color); font-size: 0.9rem; text-align: right; white-space: nowrap; }
 
+        /* 가사 쓰기 */
+        .lyric-hint { font-size: 0.8rem; color: var(--muted); font-weight: bold; margin-bottom: 10px; line-height: 1.4; }
+        .lyrics-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+        .lyric-row { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px; }
+        .lyric-chord { font-weight: 800; color: var(--heading); font-size: 0.9rem; text-align: center; background: var(--chip-bg); border-radius: 8px; padding: 6px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lyric-input {
+            width: 100%; box-sizing: border-box; padding: 8px 10px;
+            border: 2px solid var(--inset-bg); border-radius: 10px;
+            background: var(--bg-color); color: var(--text-color);
+            font-family: inherit; font-size: 0.92rem;
+        }
+        .lyric-input:focus { outline: none; border-color: var(--pastel-blue); }
+        .lyric-empty { color: var(--muted); font-size: 0.9rem; font-weight: bold; text-align: center; padding: 12px 0; }
+
         .prog-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         .icon-btn { min-width: 42px; width: 42px; height: 38px; padding: 0; justify-content: center; border-radius: 14px; }
         .icon-btn .btn-text { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -660,24 +674,32 @@
         }
 
         /* ================= 발성 모드 패널 ================= */
+        /* 피아노 건반 폭에 맞추고, 옵션을 2열로 묶어 높이를 콤팩트하게 */
         .vocal-panel {
             width: 95vw;
-            max-width: 420px;
+            max-width: 800px;
             margin: 0 auto 14px;
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 18px 20px;
+            padding: 14px 20px;
             box-sizing: border-box;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .vocal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 28px;
         }
         /* 라벨 | 컨트롤 2단 그리드 — 모든 옵션 줄을 동일 폭으로 정렬 */
         .vocal-row {
             display: grid;
-            grid-template-columns: 56px 280px;
+            grid-template-columns: 56px minmax(0, 1fr);
             align-items: center;
-            gap: 14px;
-            justify-content: center;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 0;
+        }
+        @media (max-width: 600px) {
+            .vocal-grid { grid-template-columns: 1fr; }
         }
         .vocal-label {
             font-weight: bold;
@@ -733,13 +755,14 @@
         .vocal-play-btn.playing:active { box-shadow: 0 2px 0 #E5A9B6; }
 
         .vocal-guide {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
-            margin-top: 12px;
+            display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px;
+            margin-top: 10px; overflow-x: auto;
         }
         .guide-note {
-            min-width: 34px; padding: 6px 4px; text-align: center;
+            flex: 0 0 auto;
+            min-width: 30px; padding: 5px 6px; text-align: center;
             border-radius: 10px; background: var(--chip-bg); color: var(--muted);
-            font-weight: bold; transition: all 0.1s;
+            font-weight: bold; transition: all 0.1s; white-space: nowrap;
         }
         .guide-note.current { background: var(--pastel-green); color: #1E293B; transform: scale(1.15); }
 
@@ -1223,18 +1246,30 @@
                         </div>
                     </details>
 
-                    <!-- 4) 저장 · 공유 (접기) -->
+                    <!-- 4) 가사 쓰기 (접기) -->
+                    <details class="acc-section" id="lyricsSection">
+                        <summary><span class="material-icons-round">lyrics</span> 가사 쓰기</summary>
+                        <div class="acc-body">
+                            <div class="lyric-hint">코드별로 가사를 적으면 이미지·텍스트로 내보낼 때 코드 아래에 함께 표시돼요. 🎤</div>
+                            <div id="lyricsList" class="lyrics-list"></div>
+                        </div>
+                    </details>
+
+                    <!-- 5) 저장 · 공유 (접기) -->
                     <details class="acc-section">
                         <summary><span class="material-icons-round">save</span> 저장 · 공유</summary>
                         <div class="acc-body">
                             <div class="save-grid">
                                 <button class="control-btn btn-acc-rec icon-btn" id="accRecBtn" title="반주 녹음" aria-label="반주 녹음"><span class="material-icons-round">fiber_manual_record</span><span class="btn-text">반주 녹음</span></button>
+                                <button class="control-btn btn-acc-rec icon-btn" id="accVideoBtn" title="연주 영상 녹화" aria-label="연주 영상 녹화"><span class="material-icons-round">videocam</span><span class="btn-text">영상 녹화</span></button>
                                 <button class="control-btn btn-acc-exp icon-btn" id="accImgBtn" title="이미지 저장" aria-label="이미지 저장"><span class="material-icons-round">image</span><span class="btn-text">이미지</span></button>
                                 <button class="control-btn btn-acc-exp icon-btn" id="accTxtBtn" title="텍스트 저장" aria-label="텍스트 저장"><span class="material-icons-round">description</span><span class="btn-text">텍스트</span></button>
                                 <button class="control-btn btn-acc-exp icon-btn" id="accCopyBtn" title="복사" aria-label="복사"><span class="material-icons-round">content_copy</span><span class="btn-text">복사</span></button>
                                 <button class="control-btn btn-acc-exp icon-btn" id="accShareBtn" title="링크 공유" aria-label="링크 공유"><span class="material-icons-round">ios_share</span><span class="btn-text">링크 공유</span></button>
+                                <button class="control-btn btn-acc-exp icon-btn" id="accBackupBtn" title="백업 · 복원 (JSON)" aria-label="백업 · 복원"><span class="material-icons-round">save_alt</span><span class="btn-text">백업·복원</span></button>
                             </div>
                             <div id="accRecStatus" class="record-status"></div>
+                            <input type="file" id="jsonFileInput" accept="application/json,.json" hidden>
                         </div>
                     </details>
                     </div>
@@ -1258,42 +1293,38 @@
 
             <!-- 발성 모드: 방향/음개수/시작음/속도/재생 컨트롤 -->
             <div class="vocal-panel" id="vocalControls" hidden>
-                <div class="vocal-row">
-                    <span class="vocal-label">방향</span>
-                    <div class="pattern-selector" id="dirSelector">
-                        <button class="pattern-btn active" data-dir="updown">오르락내리락</button>
-                        <button class="pattern-btn" data-dir="up">오르막길</button>
-                        <button class="pattern-btn" data-dir="down">내리막길</button>
+                <div class="vocal-grid">
+                    <div class="vocal-row">
+                        <span class="vocal-label">방향</span>
+                        <div class="pattern-selector" id="dirSelector">
+                            <button class="pattern-btn active" data-dir="updown">오르락내리락</button>
+                            <button class="pattern-btn" data-dir="up">오르막길</button>
+                            <button class="pattern-btn" data-dir="down">내리막길</button>
+                        </div>
                     </div>
-                </div>
-                <div class="vocal-row">
-                    <span class="vocal-label">시작 조</span>
-                    <div class="pattern-selector" id="tonicSelector">
-                        <button class="pattern-btn active" data-tonic="C4">C</button>
-                        <button class="pattern-btn" data-tonic="D4">D</button>
-                        <button class="pattern-btn" data-tonic="E4">E</button>
-                        <button class="pattern-btn" data-tonic="F4">F</button>
+                    <div class="vocal-row">
+                        <span class="vocal-label">시작 조</span>
+                        <div class="pattern-selector" id="tonicSelector">
+                            <button class="pattern-btn active" data-tonic="C4">C</button>
+                            <button class="pattern-btn" data-tonic="D4">D</button>
+                            <button class="pattern-btn" data-tonic="E4">E</button>
+                            <button class="pattern-btn" data-tonic="F4">F</button>
+                        </div>
                     </div>
-                </div>
-                <div class="vocal-row">
-                    <span class="vocal-label">음 개수</span>
-                    <div class="pattern-selector" id="shapeSelector">
-                        <button class="pattern-btn" data-shape="5">5음</button>
-                        <button class="pattern-btn active" data-shape="9">9음</button>
+                    <div class="vocal-row">
+                        <span class="vocal-label">음 개수</span>
+                        <div class="pattern-selector" id="shapeSelector">
+                            <button class="pattern-btn" data-shape="5">5음</button>
+                            <button class="pattern-btn active" data-shape="9">9음</button>
+                        </div>
                     </div>
-                </div>
-                <div class="vocal-row">
-                    <span class="vocal-label">속도</span>
-                    <div class="speed-control">
-                        <span class="material-icons-round" style="color:#94A3B8;">directions_walk</span>
-                        <input type="range" min="1" max="10" value="6" class="speed-slider" id="speedSlider">
-                        <span class="material-icons-round" style="color:#94A3B8;">directions_run</span>
-                    </div>
-                </div>
-                <div class="vocal-row">
-                    <span class="vocal-label">코드 안내</span>
-                    <div class="accomp-toggles">
-                        <button class="toggle-btn active" id="chordIntroToggle"><span class="material-icons-round">music_note</span> 키 코드 먼저 듣기</button>
+                    <div class="vocal-row">
+                        <span class="vocal-label">속도</span>
+                        <div class="speed-control">
+                            <span class="material-icons-round" style="color:#94A3B8;">directions_walk</span>
+                            <input type="range" min="1" max="10" value="6" class="speed-slider" id="speedSlider">
+                            <span class="material-icons-round" style="color:#94A3B8;">directions_run</span>
+                        </div>
                     </div>
                 </div>
                 <div class="vocal-play-row">
@@ -1531,17 +1562,20 @@
         const wideChordMQ = window.matchMedia('(min-width: 1000px) and (min-aspect-ratio: 4/3)');
         function applyWideChordDefaults() {
             if (!wideChordMQ.matches) return;
-            document.querySelectorAll('#chordControls .acc-section').forEach(d => { d.open = true; });
+            // 좌우 균형을 위해 핵심 설정(반주 설정) 아코디언만 펼친 상태를 기본으로
+            const first = document.querySelector('#chordControls .acc-section');
+            if (first) first.open = true;
         }
 
         function enterMode(mode) {
             currentMode = mode;
             appScreen.classList.toggle('chord-layout', mode === 'chord');
 
-            // 진행 중인 발성/자동 반주/메트로놈/소리 정리
+            // 진행 중인 발성/자동 반주/메트로놈/녹화/소리 정리
             stopVocal();
             stopAuto();
             stopBasicMetro();
+            if (typeof videoRecording !== 'undefined' && videoRecording) stopVideoRecording();
             releaseAll();
             sustainOn = false;
             updateSustainUI();
@@ -1582,6 +1616,7 @@
             stopVocal();
             stopAuto();
             stopBasicMetro();
+            if (typeof videoRecording !== 'undefined' && videoRecording) stopVideoRecording();
             releaseAll();
             // 녹음 중이었다면 취소
             if (recorder && recorder.state !== 'inactive') {
@@ -1886,10 +1921,10 @@
         function pulseDurSec() { return accMeter === '6/8' ? (60 / accBpm) / 3 : (60 / accBpm); }
 
         function cloneProgressionState() {
-            return progression.map(cell => ({ label: cell.label, notes: [...cell.notes], root: cell.root, beats: cell.beats }));
+            return progression.map(cell => ({ label: cell.label, notes: [...cell.notes], root: cell.root, beats: cell.beats, lyric: cell.lyric || '' }));
         }
         function restoreProgressionState(state) {
-            progression = state.map(cell => ({ label: cell.label, notes: [...cell.notes], root: cell.root, beats: cell.beats }));
+            progression = state.map(cell => ({ label: cell.label, notes: [...cell.notes], root: cell.root, beats: cell.beats, lyric: cell.lyric || '' }));
             renderProgression();
             updateHistoryButtons();
         }
@@ -1948,7 +1983,7 @@
         function addCell(label, notes, root, beatsOverride = null) {
             const want = beatsOverride != null ? beatsOverride : (nextCellBeats || beatsPerMeasure());
             const beats = Math.max(1, Math.min(want, beatsPerMeasure()));
-            progression.push({ label, notes: [...notes], root, beats });
+            progression.push({ label, notes: [...notes], root, beats, lyric: '' });
             renderProgression();
             recordHistory();
         }
@@ -1990,7 +2025,35 @@
         }
 
         // ---- 코드 진행 렌더링: 블록(마디줄로 마디 구분) ----
+        function renderLyricEditor() {
+            const list = document.getElementById('lyricsList');
+            if (!list) return;
+            if (progression.length === 0) {
+                list.innerHTML = '<div class="lyric-empty">먼저 코드 진행을 입력해 주세요.</div>';
+                return;
+            }
+            list.innerHTML = '';
+            progression.forEach((cell, i) => {
+                const row = document.createElement('div');
+                row.className = 'lyric-row';
+                const chip = document.createElement('span');
+                chip.className = 'lyric-chord';
+                chip.textContent = cell.label;
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'lyric-input';
+                inp.value = cell.lyric || '';
+                inp.placeholder = '가사';
+                inp.addEventListener('input', () => { if (progression[i]) progression[i].lyric = inp.value; });
+                row.appendChild(chip);
+                row.appendChild(inp);
+                list.appendChild(row);
+            });
+        }
+        function hasAnyLyric() { return progression.some(c => (c.lyric || '').trim() !== ''); }
+
         function renderProgression() {
+            renderLyricEditor();
             if (!progDisplay) return;
             if (progression.length === 0) {
                 progDisplay.classList.remove('editing');
@@ -2224,22 +2287,138 @@
             }
         }
 
+        /* ---- 연주 영상 녹화 (피아노 건반을 캔버스로 그려 webm 비디오 + 소리로 저장) ---- */
+        let videoRecorder = null, videoChunks = [], videoRafId = null, videoCanvas = null, videoRecording = false;
+        function pickVideoMime() {
+            const cands = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+            for (const m of cands) { if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }
+            return '';
+        }
+        function cssVar(name) { return getComputedStyle(document.body).getPropertyValue(name).trim() || '#ffffff'; }
+        function roundRectPath(ctx, x, y, w, h, r) {
+            r = Math.max(0, Math.min(r, w / 2, h / 2));
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+        function drawPianoFrame(ctx, wrapRect) {
+            ctx.fillStyle = cssVar('--inset-bg');
+            ctx.fillRect(0, 0, wrapRect.width, wrapRect.height);
+            const labelOn = !pianoContainer.classList.contains('hide-labels');
+            const isDark = document.body.classList.contains('dark');
+            const whites = [...pianoContainer.querySelectorAll('.key.white')].filter(k => k.offsetParent !== null);
+            whites.forEach((k, i) => {
+                const r = k.getBoundingClientRect();
+                const x = r.left - wrapRect.left, y = r.top - wrapRect.top;
+                let fill = cssVar('--key-white');
+                if (k.classList.contains('active')) fill = (i % 2 === 0) ? '#FDFD96' : '#FFD1DC';
+                ctx.fillStyle = fill;
+                roundRectPath(ctx, x + 2, y, r.width - 4, r.height, 8); ctx.fill();
+                if (labelOn) {
+                    ctx.fillStyle = isDark ? '#0B1220' : '#334155';
+                    ctx.font = "bold 16px 'Pretendard GOV', sans-serif";
+                    ctx.textAlign = 'center';
+                    ctx.fillText(k.textContent || '', x + r.width / 2, y + r.height - 14);
+                    ctx.textAlign = 'left';
+                }
+            });
+            const blacks = [...pianoContainer.querySelectorAll('.key.black')].filter(k => k.offsetParent !== null);
+            blacks.forEach(k => {
+                const r = k.getBoundingClientRect();
+                const x = r.left - wrapRect.left, y = r.top - wrapRect.top;
+                ctx.fillStyle = k.classList.contains('active') ? '#AEC6CF' : '#333333';
+                roundRectPath(ctx, x, y, r.width, r.height, 6); ctx.fill();
+            });
+        }
+        function updateVideoUI() {
+            const btn = document.getElementById('accVideoBtn');
+            if (btn) {
+                btn.classList.toggle('recording', videoRecording);
+                btn.title = videoRecording ? '영상 녹화 정지' : '연주 영상 녹화';
+                btn.setAttribute('aria-label', btn.title);
+                btn.innerHTML = `<span class="material-icons-round">${videoRecording ? 'stop' : 'videocam'}</span><span class="btn-text">${videoRecording ? '녹화 정지' : '영상 녹화'}</span>`;
+            }
+            const statusEl = document.getElementById('accRecStatus');
+            if (statusEl) {
+                if (videoRecording) statusEl.innerText = '🎥 연주 영상 녹화 중... (건반을 연주해 보세요)';
+                else setTimeout(() => { if (!videoRecording && !accRecording) statusEl.innerText = ''; }, 1200);
+            }
+        }
+        async function startVideoRecording() {
+            const wrap = document.querySelector('.piano-wrapper');
+            if (typeof MediaRecorder === 'undefined' || !wrap || !wrap.getBoundingClientRect().width) {
+                await showAlert('이 브라우저에서는 영상 녹화를 지원하지 않습니다.'); return;
+            }
+            if (Tone.context.state !== 'running') { try { await Tone.start(); } catch (e) {} }
+            const rect = wrap.getBoundingClientRect();
+            const scale = 2;
+            videoCanvas = document.createElement('canvas');
+            videoCanvas.width = Math.round(rect.width * scale);
+            videoCanvas.height = Math.round(rect.height * scale);
+            const ctx = videoCanvas.getContext('2d');
+            const render = () => {
+                const wr = wrap.getBoundingClientRect();
+                ctx.setTransform(scale, 0, 0, scale, 0, 0);
+                drawPianoFrame(ctx, wr);
+                videoRafId = requestAnimationFrame(render);
+            };
+            render();
+            const cstream = videoCanvas.captureStream(30);
+            const combined = new MediaStream();
+            cstream.getVideoTracks().forEach(t => combined.addTrack(t));
+            if (dest && dest.stream) dest.stream.getAudioTracks().forEach(t => combined.addTrack(t));
+            videoChunks = [];
+            const mime = pickVideoMime();
+            try {
+                videoRecorder = mime ? new MediaRecorder(combined, { mimeType: mime }) : new MediaRecorder(combined);
+            } catch (e) { cancelAnimationFrame(videoRafId); await showAlert('영상 녹화를 시작할 수 없습니다.'); return; }
+            videoRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) videoChunks.push(e.data); };
+            videoRecorder.onstop = () => {
+                cancelAnimationFrame(videoRafId);
+                const blob = new Blob(videoChunks, { type: videoRecorder.mimeType || 'video/webm' });
+                if (blob.size > 0) triggerDownload(URL.createObjectURL(blob), '피아노연주.webm');
+                videoChunks = [];
+            };
+            videoRecorder.start(100);
+            videoRecording = true;
+            updateVideoUI();
+        }
+        function stopVideoRecording() {
+            if (videoRecorder && videoRecorder.state !== 'inactive') videoRecorder.stop();
+            videoRecording = false;
+            updateVideoUI();
+        }
+        function toggleVideoRecording() { if (videoRecording) stopVideoRecording(); else startVideoRecording(); }
+
         /* ---- 코드 진행 내보내기 (텍스트 · 이미지 · 클립보드) ---- */
         function progressionToText() {
             const measures = groupMeasures();
+            const withLyrics = hasAnyLyric();
             const lines = [];
             for (let i = 0; i < measures.length; i += 4) {
-                const row = measures.slice(i, i + 4).map(m => m.map(c => c.label).join(' ')).join(' | ');
-                lines.push('| ' + row + ' |');
+                const rowM = measures.slice(i, i + 4);
+                const chordRow = rowM.map(m => m.map(c => c.label).join(' ')).join(' | ');
+                lines.push('| ' + chordRow + ' |');
+                if (withLyrics) {
+                    const lyricRow = rowM.map(m => m.map(c => (c.lyric || '').trim() || '·').join(' ')).join(' | ');
+                    lines.push('  ' + lyricRow);
+                    lines.push('');
+                }
             }
             return lines.join('\n');
         }
         function progressionToCanvas() {
             const mb = beatsPerMeasure();
             const measures = groupMeasures();
+            const withLyrics = hasAnyLyric();
             const perRow = 4;
             const rows = Math.ceil(measures.length / perRow) || 1;
-            const cw = 200, rh = 76, padX = 24, padTop = 64, scale = 2;
+            const cw = 200, rh = withLyrics ? 108 : 76, barH = withLyrics ? 72 : 46;
+            const padX = 24, padTop = 64, scale = 2;
             const W = padX * 2 + cw * perRow;
             const H = padTop + rh * rows + 24;
             const canvas = document.createElement('canvas');
@@ -2256,18 +2435,25 @@
                 rowMeasures.forEach((m, c) => {
                     const x = padX + c * cw;
                     ctx.strokeStyle = '#1E293B'; ctx.lineWidth = 3;
-                    ctx.beginPath(); ctx.moveTo(x, yTop); ctx.lineTo(x, yTop + 46); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(x, yTop); ctx.lineTo(x, yTop + barH); ctx.stroke();
                     let off = 0;
-                    ctx.font = "bold 20px 'Pretendard GOV', sans-serif";
                     m.forEach(cell => {
                         const cx = x + 12 + (off / mb) * (cw - 24);
+                        ctx.fillStyle = '#1E293B';
+                        ctx.font = "bold 20px 'Pretendard GOV', sans-serif";
                         ctx.fillText(cell.label, cx, yTop + 30);
+                        if (withLyrics && (cell.lyric || '').trim()) {
+                            ctx.fillStyle = '#475569';
+                            ctx.font = "18px 'Pretendard GOV', sans-serif";
+                            ctx.fillText(cell.lyric.trim(), cx, yTop + 60);
+                        }
                         off += cell.beats;
                     });
                 });
                 // 줄 끝 마디줄
                 const endX = padX + rowMeasures.length * cw;
-                ctx.beginPath(); ctx.moveTo(endX, yTop); ctx.lineTo(endX, yTop + 46); ctx.stroke();
+                ctx.strokeStyle = '#1E293B'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(endX, yTop); ctx.lineTo(endX, yTop + barH); ctx.stroke();
             }
             return canvas;
         }
@@ -2288,7 +2474,7 @@
             triggerDownload(URL.createObjectURL(blob), '코드진행.txt');
         }
         function sharePayload() {
-            return { v: 1, m: accMeter, b: accBpm, s: accStyle, x: accStyle2, c: countInOn ? 1 : 0, l: loopOn ? 1 : 0, p: progression.map(cell => [cell.label, cell.beats]) };
+            return { v: 1, m: accMeter, b: accBpm, s: accStyle, x: accStyle2, c: countInOn ? 1 : 0, l: loopOn ? 1 : 0, p: progression.map(cell => [cell.label, cell.beats, cell.lyric || '']) };
         }
         function encodeShare(obj) {
             const json = JSON.stringify(obj);
@@ -2313,21 +2499,61 @@
                 await showAlert('현재 코드 진행 링크를 복사했어요! 🔗');
             } catch (e2) { await showAlert('이 브라우저에서는 링크 복사를 지원하지 않습니다.'); }
         }
+        // 공유 링크/JSON 백업에서 읽은 객체를 현재 상태에 반영 (UI 동기화 포함)
+        function applyStateObject(data) {
+            if (!data || !Array.isArray(data.p)) return false;
+            accMeter = data.m || accMeter; setBpm(data.b || accBpm);
+            accStyle = data.s || accStyle; accStyle2 = data.x || ''; countInOn = data.c !== 0; loopOn = !!data.l;
+            progression = data.p.map((entry) => {
+                const [label, beats, lyric] = Array.isArray(entry) ? entry : [entry, beatsPerMeasure(), ''];
+                return { ...chordFromLabel(label), beats: Math.max(1, Math.min(parseInt(beats, 10) || beatsPerMeasure(), beatsPerMeasure())), lyric: lyric || '' };
+            });
+            const styleSelect = document.getElementById('styleSelect'); if (styleSelect) styleSelect.value = accStyle;
+            const styleSelect2 = document.getElementById('styleSelect2'); if (styleSelect2) styleSelect2.value = accStyle2;
+            document.querySelectorAll('#meterSelector .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.meter === accMeter));
+            const countInToggle = document.getElementById('countInToggle'); if (countInToggle) countInToggle.classList.toggle('active', countInOn);
+            const loopToggle = document.getElementById('loopToggle'); if (loopToggle) loopToggle.classList.toggle('active', loopOn);
+            return true;
+        }
         function loadSharedProgression() {
             const m = location.hash.match(/[#&]s=([^&]+)/);
             if (!m) return;
-            try {
-                const data = decodeShare(m[1]);
-                if (!data || !Array.isArray(data.p)) return;
-                accMeter = data.m || accMeter; setBpm(data.b || accBpm);
-                accStyle = data.s || accStyle; accStyle2 = data.x || ''; countInOn = data.c !== 0; loopOn = !!data.l;
-                progression = data.p.map(([label, beats]) => ({ ...chordFromLabel(label), beats: Math.max(1, Math.min(parseInt(beats, 10) || beatsPerMeasure(), beatsPerMeasure())) }));
-                const styleSelect = document.getElementById('styleSelect'); if (styleSelect) styleSelect.value = accStyle;
-                const styleSelect2 = document.getElementById('styleSelect2'); if (styleSelect2) styleSelect2.value = accStyle2;
-                document.querySelectorAll('#meterSelector .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.meter === accMeter));
-                const countInToggle = document.getElementById('countInToggle'); if (countInToggle) countInToggle.classList.toggle('active', countInOn);
-                const loopToggle = document.getElementById('loopToggle'); if (loopToggle) loopToggle.classList.toggle('active', loopOn);
-            } catch (e) { console.warn('Invalid share link', e); }
+            try { applyStateObject(decodeShare(m[1])); }
+            catch (e) { console.warn('Invalid share link', e); }
+        }
+
+        /* ---- JSON 백업 · 복원 ---- */
+        async function downloadBackupJson() {
+            if (progression.length === 0) { await showAlert('먼저 코드 진행을 입력해 주세요.'); return; }
+            const blob = new Blob([JSON.stringify(sharePayload(), null, 2)], { type: 'application/json;charset=utf-8' });
+            triggerDownload(URL.createObjectURL(blob), '코드진행_백업.json');
+        }
+        function restoreBackupFromFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const data = JSON.parse(reader.result);
+                    if (!applyStateObject(data)) { await showAlert('백업 파일 형식이 올바르지 않습니다.'); return; }
+                    renderLengthSeg();
+                    renderProgression();
+                    resetHistory();
+                    await showAlert('백업을 불러왔어요! ✅');
+                } catch (e) { await showAlert('백업 파일을 읽을 수 없습니다.'); }
+            };
+            reader.readAsText(file);
+        }
+        async function openBackupMenu() {
+            const choice = await openModal({
+                message: '코드 진행 백업 / 복원',
+                buttons: [
+                    { label: '백업하기', value: 'backup', cls: 'primary' },
+                    { label: '복원하기', value: 'restore', cls: 'ghost' },
+                    { label: '취소', value: null, cls: 'ghost' }
+                ]
+            });
+            if (choice === 'backup') downloadBackupJson();
+            else if (choice === 'restore') { const inp = document.getElementById('jsonFileInput'); if (inp) inp.click(); }
         }
 
         async function copyChordProgression() {
@@ -2408,6 +2634,16 @@
             if (accTxtBtn)  accTxtBtn.addEventListener('click', downloadChordText);
             if (accCopyBtn) accCopyBtn.addEventListener('click', copyChordProgression);
             if (accShareBtn) accShareBtn.addEventListener('click', shareChordLink);
+            const accVideoBtn = document.getElementById('accVideoBtn');
+            const accBackupBtn = document.getElementById('accBackupBtn');
+            const jsonFileInput = document.getElementById('jsonFileInput');
+            if (accVideoBtn) accVideoBtn.addEventListener('click', toggleVideoRecording);
+            if (accBackupBtn) accBackupBtn.addEventListener('click', openBackupMenu);
+            if (jsonFileInput) jsonFileInput.addEventListener('change', (e) => {
+                const f = e.target.files && e.target.files[0];
+                restoreBackupFromFile(f);
+                e.target.value = '';
+            });
 
             loadSharedProgression();
             resetHistory();
