@@ -170,12 +170,82 @@
         /* ================= 모드 선택 화면 ================= */
         #modeScreen {
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 22px;
+            margin-top: 22px;
+            width: 95vw;
+            max-width: 640px;
+        }
+
+        /* 모드 선택 안내 문구 */
+        .mode-intro {
+            text-align: center;
+            margin: 0;
+            color: var(--text-color);
+        }
+        .mode-intro .mi-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--heading);
+            margin-bottom: 4px;
+        }
+        .mode-intro .mi-sub {
+            font-size: 0.9rem;
+            color: var(--muted);
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        /* 카드 3개 줄 */
+        .mode-cards {
+            display: flex;
             flex-wrap: nowrap;
             gap: 12px;
             justify-content: center;
-            margin-top: 20px;
-            width: 95vw;
-            max-width: 640px;
+            width: 100%;
+        }
+
+        /* 기능 한눈에 (카드 아래 빈 공간 채우기) */
+        .mode-features {
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 18px 20px;
+            box-sizing: border-box;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+        .mode-features h3 {
+            display: flex; align-items: center; gap: 6px;
+            margin: 0 0 12px 0;
+            font-size: 1rem;
+            color: var(--heading);
+        }
+        .mode-features h3 .material-icons-round { color: var(--pastel-pink); font-size: 20px; }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .feature-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            background: var(--chip-bg);
+            border-radius: 14px;
+        }
+        .feature-item .fi-icon {
+            flex: 0 0 auto;
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .feature-item .fi-icon .material-icons-round { font-size: 19px; color: #fff; }
+        .feature-item .fi-text { min-width: 0; }
+        .feature-item .fi-title { font-weight: 700; font-size: 0.88rem; color: var(--text-color); line-height: 1.2; }
+        .feature-item .fi-desc { font-size: 0.74rem; color: var(--muted); font-weight: 600; line-height: 1.3; }
+        @media (max-width: 480px) {
+            .feature-grid { grid-template-columns: 1fr; gap: 8px; }
+            .mode-features { padding: 16px 14px; }
         }
 
         .mode-card {
@@ -410,6 +480,16 @@
             .chord-btn { padding: 10px 2px; font-size: 0.8rem; }
         }
 
+        /* add9 · sus2 · 6 코드 더보기 아코디언 */
+        .chord-extra { margin-top: 4px; }
+        .chord-extra > summary .chord-extra-tags {
+            font-size: 0.78rem;
+            font-weight: bold;
+            color: var(--muted);
+        }
+        .chord-extra-body { padding: 12px 12px 4px; }
+        .chord-extra-body .chord-group:last-child { margin-bottom: 0; }
+
         /* ============ 코드 모드: 자동 반주 패널 ============ */
         .accomp-panel {
             width: 100%;
@@ -491,6 +571,17 @@
             border-radius: 14px;
         }
         .prog-empty { color: var(--muted); font-size: 0.92rem; font-weight: bold; padding: 6px 4px; width: 100%; text-align: center; }
+        /* 재생 중 코드 진행은 클릭으로 점프 가능함을 표시 */
+        .prog-chart.playing .chord-block { cursor: pointer; }
+        .prog-chart.playing .chord-block:hover { background: #CFF7E6; }
+        body.dark .prog-chart.playing .chord-block:hover { background: #2F9E73; }
+        .prog-jump-hint {
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+            font-size: 0.78rem; font-weight: bold; color: var(--pastel-blue);
+            margin: -4px 0 12px; padding: 6px 8px;
+            background: var(--chip-bg); border-radius: 10px;
+        }
+        .prog-jump-hint .material-icons-round { font-size: 16px; }
         .chord-block {
             position: relative;
             display: flex; flex-direction: column;
@@ -1142,6 +1233,23 @@
             text-decoration: none;
             font-weight: bold;
         }
+
+        /* ================= 접근성 개선 ================= */
+        /* 키보드 포커스 표시 (마우스 클릭 시에는 표시 안 함) */
+        button:focus-visible, select:focus-visible, summary:focus-visible,
+        .mode-card:focus-visible, .key:focus-visible, input:focus-visible {
+            outline: 3px solid var(--pastel-blue);
+            outline-offset: 2px;
+        }
+        /* 모션 최소화 설정 사용자: 흔들림·전환 애니메이션 줄이기 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .prog-chart.editing .chord-block { animation: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -1171,20 +1279,61 @@
 
         <!-- ===== 모드 선택 화면 ===== -->
         <div id="modeScreen" hidden>
-            <div class="mode-card basic" data-mode="basic">
-                <div class="mode-icon"><span class="material-icons-round">piano</span></div>
-                <h2>기본</h2>
-                <p>건반 연주 · 녹음</p>
+            <div class="mode-intro">
+                <div class="mi-title">어떤 걸로 연주해 볼까요? 🎹</div>
+                <div class="mi-sub">원하는 모드를 골라 바로 시작해 보세요.</div>
             </div>
-            <div class="mode-card chord" data-mode="chord">
-                <div class="mode-icon"><span class="material-icons-round">grid_view</span></div>
-                <h2>코드</h2>
-                <p>코드로 화음 연주</p>
+
+            <div class="mode-cards">
+                <div class="mode-card basic" data-mode="basic">
+                    <div class="mode-icon"><span class="material-icons-round">piano</span></div>
+                    <h2>기본</h2>
+                    <p>건반 연주 · 녹음</p>
+                </div>
+                <div class="mode-card chord" data-mode="chord">
+                    <div class="mode-icon"><span class="material-icons-round">grid_view</span></div>
+                    <h2>코드</h2>
+                    <p>코드로 화음 연주</p>
+                </div>
+                <div class="mode-card vocal" data-mode="vocal">
+                    <div class="mode-icon"><span class="material-icons-round">graphic_eq</span></div>
+                    <h2>발성</h2>
+                    <p>음계 발성 연습</p>
+                </div>
             </div>
-            <div class="mode-card vocal" data-mode="vocal">
-                <div class="mode-icon"><span class="material-icons-round">graphic_eq</span></div>
-                <h2>발성</h2>
-                <p>음계 발성 연습</p>
+
+            <div class="mode-features">
+                <h3><span class="material-icons-round">auto_awesome</span> 이런 것들을 할 수 있어요</h3>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="fi-icon" style="background: var(--pastel-blue);"><span class="material-icons-round">graphic_eq</span></div>
+                        <div class="fi-text">
+                            <div class="fi-title">진짜 피아노 음색</div>
+                            <div class="fi-desc">샘플 기반 그랜드 피아노 소리</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="fi-icon" style="background: var(--pastel-pink);"><span class="material-icons-round">queue_music</span></div>
+                        <div class="fi-text">
+                            <div class="fi-title">자동 반주</div>
+                            <div class="fi-desc">아르페지오 · 발라드 등 6가지 스타일</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="fi-icon" style="background: var(--pastel-green);"><span class="material-icons-round">mic</span></div>
+                        <div class="fi-text">
+                            <div class="fi-title">발성 연습 가이드</div>
+                            <div class="fi-desc">방향 · 조 · 속도를 골라 음계 연습</div>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="fi-icon" style="background: var(--pastel-purple);"><span class="material-icons-round">save</span></div>
+                        <div class="fi-text">
+                            <div class="fi-title">녹음 · 저장 · 공유</div>
+                            <div class="fi-desc">연주 녹음 · 영상 · 이미지로 내보내기</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1232,6 +1381,7 @@
                         </div>
                     </div>
                     <div class="prog-chart" id="progDisplay"></div>
+                    <div class="prog-jump-hint" id="progJumpHint" hidden><span class="material-icons-round">touch_app</span> 재생 중 코드를 누르면 그 코드부터 다시 재생돼요</div>
 
                     <!-- 2) 재생 (가장 큰 동작) -->
                     <div class="play-row">
@@ -1820,9 +1970,9 @@
             { name: 'min7',  label: '마이너7',  suffix: 'm7',   iv: [0,3,7,10],  cls: 'ct-min7' },
             { name: 'dim',   label: '디미니시',    suffix: 'dim',  iv: [0,3,6],     cls: 'ct-dim' },
             { name: 'sus4',  label: '서스포(sus4)', suffix: 'sus4', iv: [0,5,7],    cls: 'ct-sus4' },
-            { name: 'add9',  label: 'add9',        suffix: 'add9', iv: [0,4,7,14],  cls: 'ct-add9' },
-            { name: 'sus2',  label: '서스투(sus2)', suffix: 'sus2', iv: [0,2,7],     cls: 'ct-sus2' },
-            { name: 'maj6',  label: '식스(6)',      suffix: '6',    iv: [0,4,7,9],   cls: 'ct-maj6' },
+            { name: 'add9',  label: 'add9',        suffix: 'add9', iv: [0,4,7,14],  cls: 'ct-add9', extra: true },
+            { name: 'sus2',  label: '서스투(sus2)', suffix: 'sus2', iv: [0,2,7],     cls: 'ct-sus2', extra: true },
+            { name: 'maj6',  label: '식스(6)',      suffix: '6',    iv: [0,4,7,9],   cls: 'ct-maj6', extra: true },
         ];
 
         const SUSTAIN_MS = 3500; // 서스테인 페달 유지 시간
@@ -1876,40 +2026,63 @@
             });
         }
 
+        // 코드 타입 하나를 그룹(라벨 + 버튼들)으로 만들어 반환
+        function buildChordGroup(type) {
+            const group = document.createElement('div');
+            group.className = 'chord-group';
+            const label = document.createElement('div');
+            label.className = 'chord-group-label';
+            label.textContent = type.label;
+            group.appendChild(label);
+
+            const btnRow = document.createElement('div');
+            btnRow.className = 'chord-buttons';
+            ROOT_SETS[chordAccidentalMode].forEach(root => {
+                const notes = chordNotes(root, type.iv);
+                const btn = document.createElement('button');
+                btn.className = 'chord-btn ' + type.cls;
+                const chordLabel = root + type.suffix;
+                btn.textContent = chordLabel;
+                btn.addEventListener('click', (e) => {
+                    // 코드 길이 단축키: 기본=선택한 길이 / Ctrl(⌘)=2박 / Alt=1박
+                    let beatsOverride = null;
+                    if (e.ctrlKey || e.metaKey) beatsOverride = 2;
+                    else if (e.altKey) beatsOverride = 1;
+                    playChord(notes, chordLabel);   // 기존: 기본 코드 1회 재생 (유지)
+                    addCell(chordLabel, notes, root, beatsOverride); // 확장: 코드 진행(셀)에 추가
+                    btn.classList.add('pressed');
+                    setTimeout(() => btn.classList.remove('pressed'), 150);
+                });
+                btnRow.appendChild(btn);
+            });
+            group.appendChild(btnRow);
+            return group;
+        }
+
+        let chordExtraOpen = false; // add9·sus2·6 아코디언 펼침 상태 유지
         function buildChordButtons() {
             const container = document.getElementById('chordGroups');
             container.innerHTML = '';
+            const extras = [];
             CHORD_TYPES.forEach(type => {
-                const group = document.createElement('div');
-                group.className = 'chord-group';
-                const label = document.createElement('div');
-                label.className = 'chord-group-label';
-                label.textContent = type.label;
-                group.appendChild(label);
-
-                const btnRow = document.createElement('div');
-                btnRow.className = 'chord-buttons';
-                ROOT_SETS[chordAccidentalMode].forEach(root => {
-                    const notes = chordNotes(root, type.iv);
-                    const btn = document.createElement('button');
-                    btn.className = 'chord-btn ' + type.cls;
-                    const chordLabel = root + type.suffix;
-                    btn.textContent = chordLabel;
-                    btn.addEventListener('click', (e) => {
-                        // 코드 길이 단축키: 기본=선택한 길이 / Ctrl(⌘)=2박 / Alt=1박
-                        let beatsOverride = null;
-                        if (e.ctrlKey || e.metaKey) beatsOverride = 2;
-                        else if (e.altKey) beatsOverride = 1;
-                        playChord(notes, chordLabel);   // 기존: 기본 코드 1회 재생 (유지)
-                        addCell(chordLabel, notes, root, beatsOverride); // 확장: 코드 진행(셀)에 추가
-                        btn.classList.add('pressed');
-                        setTimeout(() => btn.classList.remove('pressed'), 150);
-                    });
-                    btnRow.appendChild(btn);
-                });
-                group.appendChild(btnRow);
-                container.appendChild(group);
+                if (type.extra) { extras.push(type); return; }
+                container.appendChild(buildChordGroup(type));
             });
+            // add9 · sus2 · 6 은 기본적으로 접어두고 필요할 때 펼치기
+            if (extras.length) {
+                const details = document.createElement('details');
+                details.className = 'acc-section chord-extra';
+                details.open = chordExtraOpen;
+                details.addEventListener('toggle', () => { chordExtraOpen = details.open; });
+                const summary = document.createElement('summary');
+                summary.innerHTML = '<span class="material-icons-round">library_add</span> 코드 더보기 <span class="chord-extra-tags">add9 · sus2 · 6</span>';
+                details.appendChild(summary);
+                const body = document.createElement('div');
+                body.className = 'chord-extra-body';
+                extras.forEach(type => body.appendChild(buildChordGroup(type)));
+                details.appendChild(body);
+                container.appendChild(details);
+            }
         }
         function chordFromLabel(label) {
             const type = [...CHORD_TYPES].sort((a, b) => b.suffix.length - a.suffix.length).find(t => t.suffix && label.endsWith(t.suffix)) || CHORD_TYPES[0];
@@ -2185,6 +2358,11 @@
                     recordHistory();
                 });
                 block.addEventListener('pointerdown', onBlockPointerDown);
+                // 재생 중 코드 블록을 누르면 그 코드부터 다시 재생
+                block.addEventListener('click', (e) => {
+                    if (e.target.closest('.cell-del')) return;
+                    if (autoPlaying) jumpToCell(parseInt(block.dataset.i, 10));
+                });
             });
         }
         function highlightCurrent(cellIdx) {
@@ -2296,6 +2474,10 @@
                     : '<span class="material-icons-round">play_arrow</span> 재생';
             }
             if (accStopBtn) accStopBtn.disabled = !autoPlaying;
+            // 재생 중에는 코드 진행에서 "그 코드부터 재생" 힌트/커서를 보여줌
+            if (progDisplay) progDisplay.classList.toggle('playing', autoPlaying);
+            const hint = document.getElementById('progJumpHint');
+            if (hint) hint.hidden = !autoPlaying;
         }
 
         function stopAuto() {
@@ -2307,11 +2489,13 @@
         }
 
         // 한 마디(여러 셀 포함)를 스케줄
-        function runProgression() {
+        // skipBeats: 점프 재생 시 현재 마디에서 앞쪽으로 건너뛸 박 수(첫 마디에만 적용)
+        function runProgression(skipBeats = 0) {
             if (!autoPlaying) return;
             if (autoIndex >= measuresCache.length) {
                 if (loopOn) { autoIndex = 0; }
                 else { stopAuto(); return; }
+                skipBeats = 0;
             }
             const mb = beatsPerMeasure();
             const pulse = pulseDurSec();
@@ -2319,7 +2503,9 @@
             const measure = measuresCache[autoIndex];
             let off = 0;
             measure.forEach(cell => {
-                const startMs = off * pulse * 1000;
+                // 점프로 건너뛴 앞부분 셀은 생략
+                if (off + cell.beats <= skipBeats) { off += cell.beats; return; }
+                const startMs = (off - skipBeats) * pulse * 1000;
                 const cellBeats = Math.min(cell.beats, mb - off);
                 playChordByStyle(cell, styles, { beats: cellBeats > 0 ? cellBeats : cell.beats, pulse, startMs });
                 const ci = cell.idx;
@@ -2331,8 +2517,28 @@
                 off += cell.beats;
             });
             autoIndex++;
-            const id = setTimeout(runProgression, mb * pulse * 1000);
+            const id = setTimeout(() => runProgression(0), Math.max(0, mb - skipBeats) * pulse * 1000);
             autoTimers.push(id);
+        }
+
+        // 재생 중 코드 진행에서 특정 코드(셀)를 누르면 그 코드부터 다시 재생
+        function jumpToCell(cellIdx) {
+            if (!autoPlaying || measuresCache.length === 0) return;
+            // 클릭한 셀이 속한 마디와, 그 마디 안에서의 박 오프셋을 찾는다
+            let m = -1, offsetBeats = 0;
+            for (let i = 0; i < measuresCache.length && m < 0; i++) {
+                let off = 0;
+                for (const c of measuresCache[i]) {
+                    if (c.idx === cellIdx) { m = i; offsetBeats = off; break; }
+                    off += c.beats;
+                }
+            }
+            if (m < 0) return;
+            clearAutoTimers();
+            releaseAll();
+            if (progDisplay) progDisplay.querySelectorAll('.current').forEach(el => el.classList.remove('current'));
+            autoIndex = m;
+            runProgression(offsetBeats);
         }
 
         function doCountIn(done) {
