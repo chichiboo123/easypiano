@@ -17,8 +17,6 @@
 
     <!-- Tone.js (오디오 라이브러리) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- SortableJS (코드 진행 드래그 정렬 · 오픈소스 MIT) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js"></script>
 
     <style>
         :root {
@@ -460,90 +458,126 @@
         .accomp-toggles { display: flex; gap: 8px; flex-wrap: wrap; }
         .accomp-toggles .toggle-btn { font-size: 0.82rem; }
 
-        /* 코드 진행 도구막대 + 편집 버튼 */
-        .prog-toolbar { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 6px; }
-        .prog-title { font-weight: bold; color: var(--heading); font-size: 0.95rem; }
-        .prog-edit-btn { font-size: 0.82rem; }
-        .prog-edit-btn.active { border-color: var(--pastel-pink); color: #1E293B; background: var(--pastel-pink); }
+        /* 코드 진행 머리줄 + 편집 토글 */
+        .prog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .prog-title { display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--heading); font-size: 1rem; }
+        .prog-title .material-icons-round { color: var(--pastel-blue); }
+        #progEditBtn { font-size: 0.82rem; }
+        #progEditBtn.active { border-color: var(--pastel-pink); color: #1E293B; background: var(--pastel-pink); }
 
-        /* 코드 진행 차트 (네 마디 단위, 마디줄 표시) */
+        /* 코드 진행: 블록(마디줄로 마디 구분) */
         .prog-chart {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px 0;
-            min-height: 44px;
-            padding: 10px 6px 12px;
+            align-items: center;
+            gap: 8px;
+            min-height: 56px;
+            padding: 12px 12px;
             margin-bottom: 12px;
             background: var(--inset-bg);
             border-radius: 14px;
         }
-        .prog-empty { color: var(--muted); font-size: 0.9rem; font-weight: bold; padding: 4px 8px; }
-        .pm-measure {
-            flex: 0 0 25%;
-            box-sizing: border-box;
-            min-height: 30px;
-            padding: 2px 6px 2px 10px;
-            border-left: 3px solid var(--heading);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .pm-measure.current { background: rgba(181,234,215,0.5); border-radius: 4px; }
-        .pm-cell {
-            font-weight: bold;
-            color: var(--heading);
-            font-size: 0.95rem;
-            white-space: nowrap;
-            text-align: left;
-        }
-        .pm-cell.current { color: #0E9F6E; }
-        @media (max-width: 460px) {
-            .pm-measure { flex-basis: 50%; }
-            .pm-cell { font-size: 0.85rem; }
-        }
-
-        /* 편집 모드: 드래그 정렬용 칩 + 개별 삭제 */
-        .prog-editlist { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-        .prog-chip {
-            display: flex; align-items: center; gap: 6px;
-            padding: 6px 10px;
+        .prog-empty { color: var(--muted); font-size: 0.92rem; font-weight: bold; padding: 6px 4px; width: 100%; text-align: center; }
+        .chord-block {
+            position: relative;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-width: 52px;
+            padding: 8px 12px;
+            background: var(--pastel-blue);
+            color: #1E293B;
             border-radius: 12px;
-            background: var(--card-bg);
-            color: var(--heading);
-            font-weight: bold;
-            font-size: 0.95rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            box-shadow: 0 3px 0 rgba(0,0,0,0.12);
             cursor: grab;
+            user-select: none; -webkit-user-select: none;
             touch-action: none;
+            transition: transform 0.08s, background 0.1s;
         }
-        .prog-chip.current { background: var(--pastel-green); color: #1E293B; }
-        .prog-chip .chip-len { font-size: 0.72rem; color: var(--muted); font-weight: bold; }
-        .prog-chip .cell-del {
-            display: flex; align-items: center; justify-content: center;
-            width: 20px; height: 20px;
+        .chord-block:active { cursor: grabbing; }
+        .chord-block.dragging { opacity: 0.5; box-shadow: 0 6px 12px rgba(0,0,0,0.25); }
+        .chord-block.current { background: var(--pastel-green); transform: scale(1.06); }
+        .chord-block .cb-name { font-size: 1rem; font-weight: 800; line-height: 1.1; }
+        .chord-block .cb-len { font-size: 0.66rem; font-weight: bold; color: rgba(30,41,59,0.55); margin-top: 1px; }
+        /* 마디 시작 블록 앞 마디줄 */
+        .chord-block.measure-start { margin-left: 12px; }
+        .chord-block.measure-start::before {
+            content: ''; position: absolute; left: -8px; top: 2px; bottom: 2px;
+            width: 3px; border-radius: 2px; background: var(--heading);
+        }
+        .prog-chart > .chord-block:first-child.measure-start { margin-left: 4px; }
+        .prog-chart > .chord-block:first-child.measure-start::before { left: -4px; }
+        /* 삭제(×) 배지: 편집 모드에서만 표시 */
+        .chord-block .cell-del {
+            position: absolute; top: -7px; right: -7px;
+            display: none; align-items: center; justify-content: center;
+            width: 22px; height: 22px;
             border: none; border-radius: 50%;
             background: #FF6B6B; color: #fff;
-            cursor: pointer; font-weight: bold;
-            padding: 0;
+            cursor: pointer; padding: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
-        .prog-chip .cell-del .material-icons-round { font-size: 15px; }
-        .sortable-ghost { opacity: 0.4; }
-        .sortable-chosen { box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .chord-block .cell-del .material-icons-round { font-size: 15px; }
+        .prog-chart.editing .chord-block { animation: wiggle 0.4s ease-in-out infinite alternate; }
+        .prog-chart.editing .cell-del { display: flex; }
+        @keyframes wiggle { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
 
-        .accomp-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
+        /* 코드 길이 (세그먼트) */
+        .len-row { display: grid; grid-template-columns: max-content 1fr; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .len-label { font-weight: bold; color: var(--text-color); font-size: 0.92rem; white-space: nowrap; }
+
+        /* 세그먼트 버튼 (KRDS 스타일) */
+        .seg { display: flex; gap: 4px; background: var(--inset-bg); padding: 4px; border-radius: 14px; }
+        .seg-btn {
+            flex: 1 1 0; min-width: 0;
+            padding: 9px 6px; border: none; border-radius: 10px;
+            background: transparent; color: #64748B;
+            font-family: inherit; font-weight: bold; font-size: 0.9rem;
+            cursor: pointer; white-space: nowrap;
+            transition: all 0.15s;
         }
-        .accomp-buttons .control-btn { padding: 9px 14px; font-size: 0.9rem; }
-        .btn-acc-play  { background: var(--pastel-green); color: #1E293B; }
-        .btn-acc-play.playing { background: #88CBAF; }
-        .btn-acc-stop  { background: #FF6B6B; color: #fff; }
+        .seg-btn.active { background: var(--card-bg); color: var(--text-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* 재생/정지 (큰 주요 버튼) */
+        .play-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .big-btn {
+            flex: 1;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 15px; border: none; border-radius: 16px;
+            font-family: inherit; font-weight: 800; font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+        .big-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+        .big-btn.play  { background: var(--pastel-green); color: #1E293B; }
+        .big-btn.play.playing { background: #88CBAF; }
+        .big-btn.stop  { background: #FF6B6B; color: #fff; }
+        .big-btn:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+
+        /* 접이식 섹션 (반주 설정 · 저장/공유) */
+        .acc-section { border: 2px solid var(--inset-bg); border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
+        .acc-section > summary {
+            list-style: none; cursor: pointer;
+            padding: 12px 14px; font-weight: bold; color: var(--heading);
+            display: flex; align-items: center; gap: 6px;
+            background: var(--chip-bg);
+        }
+        .acc-section > summary::-webkit-details-marker { display: none; }
+        .acc-section > summary .material-icons-round { color: var(--muted); }
+        .acc-section > summary::after {
+            content: 'expand_more'; font-family: 'Material Icons Round'; margin-left: auto;
+            color: var(--muted); transition: transform 0.2s;
+        }
+        .acc-section[open] > summary::after { transform: rotate(180deg); }
+        .acc-body { padding: 12px 14px; }
+        .set-row { display: grid; grid-template-columns: max-content 1fr; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .set-row:last-child { margin-bottom: 0; }
+        .set-label { font-weight: bold; color: var(--text-color); font-size: 0.9rem; text-align: right; white-space: nowrap; }
+
+        .save-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .save-grid .control-btn { padding: 9px 13px; font-size: 0.88rem; }
         .btn-acc-rec   { background: #FF6B6B; color: #fff; }
         .btn-acc-rec.recording { background: var(--key-black); color: #fff; }
-        .btn-acc-del   { background: var(--inset-bg); color: var(--text-color); }
         .btn-acc-clear { background: var(--inset-bg); color: var(--text-color); }
         .btn-acc-exp   { background: var(--pastel-purple); color: #1E293B; }
         .control-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
@@ -554,11 +588,10 @@
             gap: 8px; flex-wrap: wrap;
             margin-top: 10px;
         }
-        .metro-meter .pattern-btn { padding: 6px 12px; }
 
         @media (max-width: 380px) {
-            .accomp-row { gap: 8px; }
-            .accomp-label { font-size: 0.85rem; }
+            .set-row, .len-row { gap: 8px; }
+            .set-label, .len-label { font-size: 0.85rem; }
         }
 
         /* ================= 발성 모드 패널 ================= */
@@ -1034,12 +1067,8 @@
                 </div>
                 <div class="metro-row">
                     <button class="toggle-btn" id="basicMetroToggle"><span class="material-icons-round">av_timer</span> 메트로놈</button>
-                    <input type="number" id="basicMetroBpm" class="bpm-input" min="40" max="220" value="90" inputmode="numeric">
+                    <input type="number" id="basicMetroBpm" class="bpm-input" min="40" max="220" value="120" inputmode="numeric">
                     <span class="bpm-unit">BPM</span>
-                    <div class="pattern-selector metro-meter" id="basicMetroMeter">
-                        <button class="pattern-btn active" data-beats="4">4/4</button>
-                        <button class="pattern-btn" data-beats="3">3/4</button>
-                    </div>
                 </div>
                 <div id="recordStatus" class="record-status"></div>
             </div>
@@ -1055,77 +1084,94 @@
                     </button>
                 </div>
 
-                <!-- 자동 반주 패널 (코드 진행 + 스타일/템포/박자/반복) -->
+                <!-- 자동 반주 패널 (단순 구성: 진행 → 재생 → 설정/저장은 접기) -->
                 <div class="accomp-panel">
-                    <div class="accomp-row">
-                        <span class="accomp-label">반주 스타일</span>
-                        <div class="style-mix">
-                            <select id="styleSelect" class="accomp-select">
-                                <option value="basic">기본 (동시)</option>
-                                <option value="arpeggio">아르페지오</option>
-                                <option value="ballad">발라드</option>
-                                <option value="pop8">8비트</option>
-                                <option value="waltz">왈츠</option>
-                                <option value="musical">뮤지컬</option>
-                            </select>
-                            <select id="styleSelect2" class="accomp-select">
-                                <option value="">+ 섞기 없음</option>
-                                <option value="basic">+ 기본</option>
-                                <option value="arpeggio">+ 아르페지오</option>
-                                <option value="ballad">+ 발라드</option>
-                                <option value="pop8">+ 8비트</option>
-                                <option value="waltz">+ 왈츠</option>
-                                <option value="musical">+ 뮤지컬</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="accomp-row">
-                        <span class="accomp-label">코드 길이</span>
-                        <select id="lengthSelect" class="accomp-select"></select>
-                    </div>
-                    <div class="accomp-row">
-                        <span class="accomp-label">템포</span>
-                        <div class="tempo-control">
-                            <input type="range" id="bpmSlider" min="60" max="160" value="90">
-                            <input type="number" id="bpmInput" class="bpm-input" min="60" max="160" value="90" inputmode="numeric">
-                            <span class="bpm-unit">BPM</span>
-                        </div>
-                    </div>
-                    <div class="accomp-row">
-                        <span class="accomp-label">박자</span>
-                        <div class="pattern-selector" id="meterSelector">
-                            <button class="pattern-btn active" data-meter="4/4">4/4</button>
-                            <button class="pattern-btn" data-meter="3/4">3/4</button>
-                            <button class="pattern-btn" data-meter="6/8">6/8</button>
-                        </div>
-                    </div>
-                    <div class="accomp-row">
-                        <span class="accomp-label">옵션</span>
-                        <div class="accomp-toggles">
-                            <button class="toggle-btn active" id="countInToggle"><span class="material-icons-round">timer</span> 카운트인</button>
-                            <button class="toggle-btn" id="loopToggle"><span class="material-icons-round">repeat</span> 반복</button>
-                        </div>
-                    </div>
 
-                    <div class="prog-toolbar">
-                        <span class="prog-title">코드 진행</span>
-                        <button class="toggle-btn prog-edit-btn" id="progEditBtn"><span class="material-icons-round">edit</span> 편집</button>
+                    <!-- 1) 코드 진행 (블록) -->
+                    <div class="prog-head">
+                        <span class="prog-title"><span class="material-icons-round">queue_music</span> 코드 진행</span>
+                        <button class="toggle-btn" id="progEditBtn"><span class="material-icons-round">edit</span> 편집</button>
                     </div>
                     <div class="prog-chart" id="progDisplay"></div>
 
-                    <div class="accomp-buttons">
-                        <button class="control-btn btn-acc-play" id="accPlayBtn"><span class="material-icons-round">play_arrow</span> 재생</button>
-                        <button class="control-btn btn-acc-stop" id="accStopBtn"><span class="material-icons-round">stop</span> 정지</button>
-                        <button class="control-btn btn-acc-rec" id="accRecBtn"><span class="material-icons-round">fiber_manual_record</span> 반주 녹음</button>
-                        <button class="control-btn btn-acc-del" id="accDelBtn"><span class="material-icons-round">backspace</span> 마지막 삭제</button>
-                        <button class="control-btn btn-acc-clear" id="accClearBtn"><span class="material-icons-round">clear_all</span> 전체 초기화</button>
+                    <!-- 다음에 추가할 코드 길이 -->
+                    <div class="len-row">
+                        <span class="len-label">코드 길이</span>
+                        <div class="seg" id="lengthSeg"></div>
                     </div>
-                    <div class="accomp-buttons">
-                        <button class="control-btn btn-acc-exp" id="accImgBtn"><span class="material-icons-round">image</span> 이미지 저장</button>
-                        <button class="control-btn btn-acc-exp" id="accTxtBtn"><span class="material-icons-round">description</span> 텍스트 저장</button>
-                        <button class="control-btn btn-acc-exp" id="accCopyBtn"><span class="material-icons-round">content_copy</span> 복사</button>
+
+                    <!-- 2) 재생 (가장 큰 동작) -->
+                    <div class="play-row">
+                        <button class="big-btn play" id="accPlayBtn"><span class="material-icons-round">play_arrow</span> 재생</button>
+                        <button class="big-btn stop" id="accStopBtn"><span class="material-icons-round">stop</span> 정지</button>
                     </div>
-                    <div id="accRecStatus" class="record-status"></div>
+
+                    <!-- 3) 반주 설정 (접기) -->
+                    <details class="acc-section">
+                        <summary><span class="material-icons-round">tune</span> 반주 설정</summary>
+                        <div class="acc-body">
+                            <div class="set-row">
+                                <span class="set-label">스타일</span>
+                                <div class="style-mix">
+                                    <select id="styleSelect" class="accomp-select">
+                                        <option value="basic">기본 (동시)</option>
+                                        <option value="arpeggio">아르페지오</option>
+                                        <option value="ballad">발라드</option>
+                                        <option value="pop8">8비트</option>
+                                        <option value="waltz">왈츠</option>
+                                        <option value="musical">뮤지컬</option>
+                                    </select>
+                                    <select id="styleSelect2" class="accomp-select">
+                                        <option value="">섞기 없음</option>
+                                        <option value="basic">+ 기본</option>
+                                        <option value="arpeggio">+ 아르페지오</option>
+                                        <option value="ballad">+ 발라드</option>
+                                        <option value="pop8">+ 8비트</option>
+                                        <option value="waltz">+ 왈츠</option>
+                                        <option value="musical">+ 뮤지컬</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="set-row">
+                                <span class="set-label">템포</span>
+                                <div class="tempo-control">
+                                    <input type="range" id="bpmSlider" min="60" max="160" value="90">
+                                    <input type="number" id="bpmInput" class="bpm-input" min="60" max="160" value="90" inputmode="numeric">
+                                    <span class="bpm-unit">BPM</span>
+                                </div>
+                            </div>
+                            <div class="set-row">
+                                <span class="set-label">박자</span>
+                                <div class="seg" id="meterSelector">
+                                    <button class="seg-btn active" data-meter="4/4">4/4</button>
+                                    <button class="seg-btn" data-meter="3/4">3/4</button>
+                                    <button class="seg-btn" data-meter="6/8">6/8</button>
+                                </div>
+                            </div>
+                            <div class="set-row">
+                                <span class="set-label">옵션</span>
+                                <div class="accomp-toggles">
+                                    <button class="toggle-btn active" id="countInToggle"><span class="material-icons-round">timer</span> 카운트인</button>
+                                    <button class="toggle-btn" id="loopToggle"><span class="material-icons-round">repeat</span> 반복</button>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- 4) 저장 · 공유 (접기) -->
+                    <details class="acc-section">
+                        <summary><span class="material-icons-round">save</span> 저장 · 공유</summary>
+                        <div class="acc-body">
+                            <div class="save-grid">
+                                <button class="control-btn btn-acc-rec" id="accRecBtn"><span class="material-icons-round">fiber_manual_record</span> 반주 녹음</button>
+                                <button class="control-btn btn-acc-exp" id="accImgBtn"><span class="material-icons-round">image</span> 이미지</button>
+                                <button class="control-btn btn-acc-exp" id="accTxtBtn"><span class="material-icons-round">description</span> 텍스트</button>
+                                <button class="control-btn btn-acc-exp" id="accCopyBtn"><span class="material-icons-round">content_copy</span> 복사</button>
+                                <button class="control-btn btn-acc-clear" id="accClearBtn"><span class="material-icons-round">delete_sweep</span> 전체 비우기</button>
+                            </div>
+                            <div id="accRecStatus" class="record-status"></div>
+                        </div>
+                    </details>
                 </div>
 
                 <div id="chordGroups"><!-- JS로 렌더링 --></div>
@@ -1681,14 +1727,13 @@
         let autoIndex = 0;
         let measuresCache = [];
         let metroSynth = null;
-        let sortableInst = null;
         let accRecording = false;
+        let dragState = null;          // 코드 블록 드래그 정렬 상태
 
         const progDisplay = document.getElementById('progDisplay');
         const accPlayBtn  = document.getElementById('accPlayBtn');
         const accStopBtn  = document.getElementById('accStopBtn');
         const accRecBtn   = document.getElementById('accRecBtn');
-        const accDelBtn   = document.getElementById('accDelBtn');
         const accClearBtn = document.getElementById('accClearBtn');
 
         // 박자별 한 마디 박 수 / 한 박(펄스) 길이
@@ -1704,11 +1749,20 @@
             else opts.push({ v: 3, l: '½ (3박)' }, { v: 2, l: '2박' }, { v: 1, l: '1박' });
             return opts;
         }
-        function renderLengthOptions() {
-            const sel = document.getElementById('lengthSelect');
-            if (!sel) return;
-            sel.innerHTML = lengthOptions().map(o => `<option value="${o.v}">${o.l}</option>`).join('');
-            sel.value = String(Math.min(nextCellBeats, beatsPerMeasure()));
+        function renderLengthSeg() {
+            const seg = document.getElementById('lengthSeg');
+            if (!seg) return;
+            const cur = Math.min(nextCellBeats, beatsPerMeasure());
+            seg.innerHTML = lengthOptions().map(o =>
+                `<button class="seg-btn${o.v === cur ? ' active' : ''}" data-beats="${o.v}">${o.l}</button>`
+            ).join('');
+            seg.querySelectorAll('.seg-btn').forEach(b => {
+                b.addEventListener('click', () => {
+                    nextCellBeats = parseInt(b.dataset.beats, 10);
+                    seg.querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                });
+            });
         }
 
         // 코드를 진행(셀)에 추가
@@ -1754,67 +1808,43 @@
             });
         }
 
-        // ---- 코드 진행 렌더링: 일반(차트) / 편집(드래그·삭제) ----
+        // ---- 코드 진행 렌더링: 블록(마디줄로 마디 구분) ----
         function renderProgression() {
             if (!progDisplay) return;
             if (progression.length === 0) {
-                progDisplay.innerHTML = '<span class="prog-empty">코드 버튼을 누르면 진행에 추가돼요 🎵</span>';
+                progDisplay.classList.remove('editing');
+                progDisplay.innerHTML = '<span class="prog-empty">코드 버튼을 누르면 여기에 블록으로 쌓여요 🎵</span>';
                 return;
             }
-            if (editMode) renderEditList();
-            else renderChart();
-        }
-        function renderChart() {
             const mb = beatsPerMeasure();
-            const measures = groupMeasures();
-            progDisplay.innerHTML = measures.map((m, mi) =>
-                `<div class="pm-measure" data-m="${mi}">` +
-                m.map(c => `<span class="pm-cell" data-i="${c.idx}" style="flex:${c.beats} 1 0">${c.label}</span>`).join('') +
-                `</div>`
-            ).join('');
-        }
-        function renderEditList() {
-            const html = progression.map((c, i) =>
-                `<div class="prog-chip" data-i="${i}">` +
-                    `<span>${c.label}</span>` +
-                    `<span class="chip-len">${beatLabel(c.beats)}</span>` +
+            let acc = 0;
+            const html = progression.map((c, i) => {
+                const measureStart = (acc === 0);
+                acc += c.beats; if (acc >= mb) acc = 0;
+                return `<div class="chord-block${measureStart ? ' measure-start' : ''}" data-i="${i}">` +
                     `<button class="cell-del" data-i="${i}" title="삭제"><span class="material-icons-round">close</span></button>` +
-                `</div>`
-            ).join('');
-            progDisplay.innerHTML = `<div class="prog-editlist" id="progEditList">${html}</div>`;
-            progDisplay.querySelectorAll('.cell-del').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                    `<span class="cb-name">${c.label}</span>` +
+                    `<span class="cb-len">${beatLabel(c.beats)}</span>` +
+                `</div>`;
+            }).join('');
+            progDisplay.innerHTML = html;
+            progDisplay.classList.toggle('editing', editMode);
+            wireBlocks();
+        }
+        function wireBlocks() {
+            progDisplay.querySelectorAll('.chord-block').forEach(block => {
+                block.querySelector('.cell-del').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    progression.splice(parseInt(btn.dataset.i, 10), 1);
+                    progression.splice(parseInt(block.dataset.i, 10), 1);
                     renderProgression();
                 });
+                block.addEventListener('pointerdown', onBlockPointerDown);
             });
-            const listEl = document.getElementById('progEditList');
-            if (window.Sortable && listEl) {
-                if (sortableInst) { try { sortableInst.destroy(); } catch (e) {} }
-                sortableInst = Sortable.create(listEl, {
-                    animation: 150,
-                    filter: '.cell-del',
-                    onEnd: (evt) => {
-                        if (evt.oldIndex === evt.newIndex) return;
-                        const item = progression.splice(evt.oldIndex, 1)[0];
-                        progression.splice(evt.newIndex, 0, item);
-                        renderProgression();
-                    }
-                });
-            }
         }
-        function highlightCurrent(measureIdx, cellIdx) {
+        function highlightCurrent(cellIdx) {
             if (!progDisplay) return;
-            if (editMode) {
-                progDisplay.querySelectorAll('.prog-chip').forEach(el =>
-                    el.classList.toggle('current', parseInt(el.dataset.i, 10) === cellIdx));
-            } else {
-                progDisplay.querySelectorAll('.pm-measure').forEach(el =>
-                    el.classList.toggle('current', parseInt(el.dataset.m, 10) === measureIdx));
-                progDisplay.querySelectorAll('.pm-cell').forEach(el =>
-                    el.classList.toggle('current', parseInt(el.dataset.i, 10) === cellIdx));
-            }
+            progDisplay.querySelectorAll('.chord-block').forEach(el =>
+                el.classList.toggle('current', parseInt(el.dataset.i, 10) === cellIdx));
         }
         function toggleEdit(on) {
             editMode = (on === undefined) ? !editMode : on;
@@ -1823,8 +1853,54 @@
                 btn.classList.toggle('active', editMode);
                 btn.innerHTML = `<span class="material-icons-round">${editMode ? 'check' : 'edit'}</span> ${editMode ? '완료' : '편집'}`;
             }
-            if (editMode) stopAuto();
-            renderProgression();
+            if (progDisplay) progDisplay.classList.toggle('editing', editMode);
+        }
+
+        /* ---- 코드 블록 드래그로 순서 바꾸기 (포인터 이벤트 · 라이브러리 없이) ---- */
+        function onBlockPointerDown(e) {
+            if (e.target.closest('.cell-del')) return;      // 삭제 버튼은 드래그 제외
+            if (autoPlaying) return;                        // 재생 중에는 정렬 잠금
+            const block = e.currentTarget;
+            dragState = { block, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false };
+            try { block.setPointerCapture(e.pointerId); } catch (err) {}
+            block.addEventListener('pointermove', onBlockPointerMove);
+            block.addEventListener('pointerup', onBlockPointerUp);
+            block.addEventListener('pointercancel', onBlockPointerUp);
+        }
+        function onBlockPointerMove(e) {
+            if (!dragState) return;
+            const dx = e.clientX - dragState.startX, dy = e.clientY - dragState.startY;
+            if (!dragState.moved && Math.hypot(dx, dy) < 6) return;
+            if (!dragState.moved) {
+                dragState.moved = true;
+                dragState.block.classList.add('dragging');
+                dragState.block.style.pointerEvents = 'none';   // 아래 요소를 hit-test 하도록
+            }
+            const under = document.elementFromPoint(e.clientX, e.clientY);
+            const target = under && under.closest('.chord-block');
+            if (target && target !== dragState.block && target.parentElement === progDisplay) {
+                const rect = target.getBoundingClientRect();
+                const before = e.clientY < rect.top + rect.height / 2 ||
+                               (Math.abs(e.clientY - (rect.top + rect.height / 2)) < rect.height / 2 && e.clientX < rect.left + rect.width / 2);
+                progDisplay.insertBefore(dragState.block, before ? target : target.nextSibling);
+            }
+        }
+        function onBlockPointerUp(e) {
+            if (!dragState) return;
+            const block = dragState.block;
+            block.classList.remove('dragging');
+            block.style.pointerEvents = '';
+            block.removeEventListener('pointermove', onBlockPointerMove);
+            block.removeEventListener('pointerup', onBlockPointerUp);
+            block.removeEventListener('pointercancel', onBlockPointerUp);
+            try { block.releasePointerCapture(dragState.pointerId); } catch (err) {}
+            if (dragState.moved) {
+                // 현재 DOM 순서대로 progression 재구성
+                const order = [...progDisplay.querySelectorAll('.chord-block')].map(el => parseInt(el.dataset.i, 10));
+                progression = order.map(i => progression[i]);
+                renderProgression();
+            }
+            dragState = null;
         }
 
         function highlightAccKey(note, ms) {
@@ -1884,10 +1960,10 @@
                 const startMs = off * pulse * 1000;
                 const cellBeats = Math.min(cell.beats, mb - off);
                 playChordByStyle(cell, styles, { beats: cellBeats > 0 ? cellBeats : cell.beats, pulse, startMs });
-                const mi = autoIndex, ci = cell.idx;
+                const ci = cell.idx;
                 const did = setTimeout(() => {
                     updateChordDisplay(cell.label, cell.notes);
-                    highlightCurrent(mi, ci);
+                    highlightCurrent(ci);
                 }, startMs);
                 autoTimers.push(did);
                 off += cell.beats;
@@ -2039,7 +2115,6 @@
         (function wireAccompaniment() {
             const styleSelect   = document.getElementById('styleSelect');
             const styleSelect2  = document.getElementById('styleSelect2');
-            const lengthSelect  = document.getElementById('lengthSelect');
             const bpmSlider     = document.getElementById('bpmSlider');
             const bpmInput      = document.getElementById('bpmInput');
             const meterSelector = document.getElementById('meterSelector');
@@ -2049,23 +2124,22 @@
 
             if (styleSelect)  styleSelect.addEventListener('change', () => { accStyle = styleSelect.value; });
             if (styleSelect2) styleSelect2.addEventListener('change', () => { accStyle2 = styleSelect2.value; });
-            if (lengthSelect) lengthSelect.addEventListener('change', () => { nextCellBeats = parseInt(lengthSelect.value, 10); });
             if (bpmSlider) bpmSlider.addEventListener('input', () => setBpm(bpmSlider.value));
             if (bpmInput) {
                 bpmInput.addEventListener('change', () => setBpm(bpmInput.value));
                 bpmInput.addEventListener('blur', () => setBpm(bpmInput.value));
             }
-            if (meterSelector) meterSelector.querySelectorAll('.pattern-btn').forEach(btn => {
+            if (meterSelector) meterSelector.querySelectorAll('.seg-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const oldMb = beatsPerMeasure();
-                    meterSelector.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+                    meterSelector.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     accMeter = btn.dataset.meter;
                     const newMb = beatsPerMeasure();
                     // 박자 변경 시 셀 길이 보정 (한 마디였던 것은 새 한 마디로, 넘치면 한 마디로)
                     progression.forEach(c => { if (c.beats === oldMb || c.beats > newMb) c.beats = newMb; });
                     if (nextCellBeats === oldMb || nextCellBeats > newMb) nextCellBeats = newMb;
-                    renderLengthOptions();
+                    renderLengthSeg();
                     renderProgression();
                 });
             });
@@ -2081,8 +2155,7 @@
             if (accPlayBtn)  accPlayBtn.addEventListener('click', startAuto);
             if (accStopBtn)  accStopBtn.addEventListener('click', stopAuto);
             if (accRecBtn)   accRecBtn.addEventListener('click', toggleAccRecording);
-            if (accDelBtn)   accDelBtn.addEventListener('click', () => { progression.pop(); renderProgression(); });
-            if (accClearBtn) accClearBtn.addEventListener('click', () => { progression = []; renderProgression(); });
+            if (accClearBtn) accClearBtn.addEventListener('click', () => { progression = []; editMode = false; toggleEdit(false); renderProgression(); });
             const accImgBtn = document.getElementById('accImgBtn');
             const accTxtBtn = document.getElementById('accTxtBtn');
             const accCopyBtn = document.getElementById('accCopyBtn');
@@ -2090,7 +2163,7 @@
             if (accTxtBtn)  accTxtBtn.addEventListener('click', downloadChordText);
             if (accCopyBtn) accCopyBtn.addEventListener('click', copyChordProgression);
 
-            renderLengthOptions();
+            renderLengthSeg();
             renderProgression();
             updateAutoUI();
         })();
@@ -2122,7 +2195,7 @@
         let basicMetroTimer = null;
         let basicMetroBeat = 0;
         let basicMetroBeats = 4;
-        let basicMetroBpm = 90;
+        let basicMetroBpm = 120;
 
         function stopBasicMetro() {
             basicMetroOn = false;
@@ -2147,13 +2220,12 @@
         (function wireBasicMetro() {
             const toggle = document.getElementById('basicMetroToggle');
             const bpm = document.getElementById('basicMetroBpm');
-            const meter = document.getElementById('basicMetroMeter');
             if (toggle) toggle.addEventListener('click', () => {
                 if (basicMetroOn) stopBasicMetro(); else startBasicMetro();
             });
             if (bpm) {
                 const apply = () => {
-                    let v = parseInt(bpm.value, 10); if (isNaN(v)) v = 90;
+                    let v = parseInt(bpm.value, 10); if (isNaN(v)) v = 120;
                     v = Math.max(40, Math.min(220, v));
                     bpm.value = v; basicMetroBpm = v;
                     if (basicMetroOn) startBasicMetro(); // 즉시 반영
@@ -2161,14 +2233,6 @@
                 bpm.addEventListener('change', apply);
                 bpm.addEventListener('blur', apply);
             }
-            if (meter) meter.querySelectorAll('.pattern-btn').forEach(b => {
-                b.addEventListener('click', () => {
-                    meter.querySelectorAll('.pattern-btn').forEach(x => x.classList.remove('active'));
-                    b.classList.add('active');
-                    basicMetroBeats = parseInt(b.dataset.beats, 10);
-                    basicMetroBeat = 0;
-                });
-            });
         })();
 
         /* ===================================================================
