@@ -621,7 +621,7 @@
                 width: min(96vw, 1280px);
                 max-width: 1280px;
                 display: grid;
-                grid-template-columns: minmax(420px, 520px) minmax(460px, 1fr);
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 18px;
                 align-items: start;
             }
@@ -1403,6 +1403,20 @@
         const recordsPanel = document.getElementById('recordsPanel');
 
         let currentMode = 'basic';
+        function hasSharedChordLink() { return /[#&]s=([^&]+)/.test(location.hash); }
+        function openSharedChordModeWhenReady() {
+            if (!hasSharedChordLink() || typeof enterMode !== 'function') return false;
+            setupRecorder();
+            startScreen.hidden = true;
+            modeScreen.hidden = true;
+            enterMode('chord');
+            return true;
+        }
+        function ensureToneStarted() {
+            if (typeof Tone !== 'undefined' && Tone.context && Tone.context.state !== 'running') {
+                Tone.start().catch(() => {});
+            }
+        }
 
         /* ===================================================================
          * 오디오 시작 게이트
@@ -1418,7 +1432,13 @@
             audioReady = true;
             spinner.style.display = "none";
             statusText.innerHTML = usingFallback ? "준비 완료! 🎹 (기본 음색)" : "피아노 준비 완료! 🎹";
-            startBtn.style.display = "block";
+            if (hasSharedChordLink()) {
+                startBtn.textContent = '공유 코드 열기';
+                startBtn.style.display = "block";
+                setTimeout(openSharedChordModeWhenReady, 0);
+            } else {
+                startBtn.style.display = "block";
+            }
         }
 
         // 1) 샘플 로딩 성공 → Sampler 사용
@@ -1439,30 +1459,36 @@
             }
         }, 8000);
 
+        function setupRecorder() {
+            if (recorder || typeof MediaRecorder === 'undefined') return;
+            // MediaRecorder 초기화 (WebM 형식 선호, 안되면 브라우저 기본 포맷)
+            const options = { mimeType: 'audio/webm' };
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                options.mimeType = 'audio/webm;codecs=opus';
+            }
+            try {
+                recorder = new MediaRecorder(dest.stream, options);
+            } catch (e) {
+                console.warn('WebM not supported, falling back to default MIME type.');
+                recorder = new MediaRecorder(dest.stream);
+            }
+
+            recorder.ondataavailable = e => {
+                if (e.data && e.data.size > 0) audioChunks.push(e.data);
+            };
+            recorder.onstop = handleRecorderStop;
+        }
+
         {
             startBtn.addEventListener('click', async () => {
                 await Tone.start();
+                setupRecorder();
 
-                // MediaRecorder 초기화 (WebM 형식 선호, 안되면 브라우저 기본 포맷)
-                const options = { mimeType: 'audio/webm' };
-                if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                    options.mimeType = 'audio/webm;codecs=opus';
+                // 시작 화면 → 모드 선택 화면 (공유 링크는 바로 코드 모드)
+                if (!openSharedChordModeWhenReady()) {
+                    startScreen.hidden = true;
+                    modeScreen.hidden = false;
                 }
-                try {
-                    recorder = new MediaRecorder(dest.stream, options);
-                } catch (e) {
-                    console.warn('WebM not supported, falling back to default MIME type.');
-                    recorder = new MediaRecorder(dest.stream);
-                }
-
-                recorder.ondataavailable = e => {
-                    if (e.data && e.data.size > 0) audioChunks.push(e.data);
-                };
-                recorder.onstop = handleRecorderStop;
-
-                // 시작 화면 → 모드 선택 화면
-                startScreen.hidden = true;
-                modeScreen.hidden = false;
             });
         }
 
@@ -1563,6 +1589,7 @@
         const pendingRelease = {}; // 서스테인 중 예약된 release 타이머
 
         function triggerNoteOn(key) {
+            ensureToneStarted();
             const note = key.getAttribute('data-note');
             if (!note) return;
             // 서스테인(또는 코드)으로 울리고 있던 음이면 예약된 release/하이라이트 해제
@@ -1674,6 +1701,7 @@
         }
 
         function playChord(notes, label) {
+            ensureToneStarted();
             const dur = sustainOn ? SUSTAIN_MS / 1000 : 1.2;
             instrument.triggerAttackRelease(notes, dur);
             if (label) updateChordDisplay(label, notes);
