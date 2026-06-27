@@ -944,6 +944,7 @@
 
         .action-btn:hover { background: var(--inset-bg); }
         .btn-play { color: #4ECDC4; }
+        .btn-chord { color: #A78BFA; }
         .btn-down { color: #45B7D1; }
         .btn-del { color: #FF6B6B; }
 
@@ -3276,13 +3277,17 @@
         function saveRecordToStorage(name, base64data, ext) {
             try {
                 const records = getRecords();
-                records.unshift({
+                const entry = {
                     id: Date.now(),
                     name: name,
                     date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString().slice(0,5),
                     data: base64data,
                     ext: ext
-                });
+                };
+                if (currentMode === 'chord' && progression.length > 0) {
+                    entry.chordData = sharePayload();
+                }
+                records.unshift(entry);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
             } catch (e) {
                 showAlert("기기의 저장 공간이 부족합니다. 이전 연주를 삭제해주세요!");
@@ -3328,6 +3333,15 @@
             }
         };
 
+        window.loadChordFromRecord = async (id) => {
+            const record = getRecords().find(r => r.id === id);
+            if (!record || !record.chordData) return;
+            const ok = progression.length === 0 || await showConfirm('현재 코드 진행이 지워지고 녹음 당시의 코드 진행으로 교체됩니다. 계속할까요?');
+            if (!ok) return;
+            if (typeof enterMode === 'function') enterMode('chord');
+            if (applyStateObject(record.chordData)) renderProgression();
+        };
+
         function renderRecords() {
             const listEl = document.getElementById('recordsList');
             const records = getRecords();
@@ -3346,6 +3360,7 @@
                     </div>
                     <div class="record-actions">
                         <button class="action-btn btn-play" onclick="playSavedRecord(${r.id})" title="듣기"><span class="material-icons-round">play_arrow</span></button>
+                        ${r.chordData ? `<button class="action-btn btn-chord" onclick="loadChordFromRecord(${r.id})" title="코드 불러오기"><span class="material-icons-round">queue_music</span></button>` : ''}
                         <button class="action-btn" onclick="renameRecord(${r.id})" title="이름변경"><span class="material-icons-round">edit</span></button>
                         <button class="action-btn btn-down" onclick="downloadRecord(${r.id})" title="다운로드"><span class="material-icons-round">download</span></button>
                         <button class="action-btn btn-del" onclick="deleteRecord(${r.id})" title="삭제"><span class="material-icons-round">delete</span></button>
